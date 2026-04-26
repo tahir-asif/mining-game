@@ -79,13 +79,6 @@ pub fn debug(cam: &mut CameraSettings, player: &mut Player) {
         }
     }
 
-    // X-axis (Red)
-    draw_line_3d(vec3(0., 0., 0.), vec3(500., 0., 0.), RED);
-    // Y-axis (Green)
-    draw_line_3d(vec3(0., 0., 0.), vec3(0., 500., 0.), GREEN);
-    // Z-axis (Blue)
-    draw_line_3d(vec3(0., 0., 0.), vec3(0., 0., 500.), BLUE);
-
     root_ui().window(hash!(), vec2(0.0, 0.0), vec2(100.0, 150.0), |ui| {
         ui.label(vec2(5.0, 1.0), &format!("pos[1] = {0}", cam.pos_x));
         ui.label(vec2(5.0, 11.0), &format!("pos[y] = {0}", cam.pos_y));
