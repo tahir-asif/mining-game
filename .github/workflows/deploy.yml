@@ -28,7 +28,7 @@ jobs:
       - name: Prepare Deployment Directory
         run: |
           mkdir -p ./deploy
-          cp /home/runner/work/mining-game/mining-game.wasm ./deploy/
+          cp ./target/wasm32-unknown-unknown/release/mining-game.wasm ./deploy/
           cp index.html ./deploy/
 
       - name: Deploy
