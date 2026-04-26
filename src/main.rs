@@ -8,6 +8,7 @@ pub mod player;
 #[macroquad::main("Mining Game")]
 async fn main() {
     let mut player = Player::new(0.5, 0.5);
+    let mut debug_toggle = false;
 
     let mut cam = CameraSettings {
         pos_x: 10.0,
@@ -27,9 +28,13 @@ async fn main() {
             break; // end game
         }
 
-        clear_background(GRAY);
+        if is_key_pressed(KeyCode::Enter) {
+            debug_toggle = !debug_toggle;
+        }
 
-        debug(&mut cam, &mut player);
+        if debug_toggle {
+            debug(&mut cam, &mut player);
+        }
 
         set_camera(&Camera3D {
             position: vec3(cam.pos_x, cam.pos_y, cam.pos_z),
@@ -37,6 +42,8 @@ async fn main() {
             target: vec3(cam.tar_x, cam.tar_y, cam.tar_z),
             ..Default::default()
         });
+
+        clear_background(GRAY);
 
         draw_grid(20, 1.0, RED, BLUE);
 
