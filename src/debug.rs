@@ -1,5 +1,18 @@
+use crate::player::Player;
 use macroquad::prelude::*;
 use macroquad::ui::{hash, root_ui};
+
+pub struct CameraSettings {
+    pub cam_pos_1: f32,
+    pub cam_pos_2: f32,
+    pub cam_pos_3: f32,
+    pub cam_up_1: f32,
+    pub cam_up_2: f32,
+    pub cam_up_3: f32,
+    pub cam_tar_1: f32,
+    pub cam_tar_2: f32,
+    pub cam_tar_3: f32,
+}
 
 pub fn debug(set: &mut CameraSettings, player: &mut Player) {
     if is_key_pressed(KeyCode::Y) {

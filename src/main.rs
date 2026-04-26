@@ -1,21 +1,9 @@
-use crate::debug::debug;
-use crate::player::Player;
+use crate::debug::*;
+use crate::player::*;
 use macroquad::prelude::*;
 
 pub mod debug;
 pub mod player;
-
-struct CameraSettings {
-    cam_pos_1: f32,
-    cam_pos_2: f32,
-    cam_pos_3: f32,
-    cam_up_1: f32,
-    cam_up_2: f32,
-    cam_up_3: f32,
-    cam_tar_1: f32,
-    cam_tar_2: f32,
-    cam_tar_3: f32,
-}
 
 #[macroquad::main("Mining Game")]
 async fn main() {
