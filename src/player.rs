@@ -27,8 +27,7 @@ impl Player {
             Some(KeyCode::A) => (1, 0),
             _ => return,
         };
-        if game_map.is_block(self.x_pos + dz, self.z_pos + dz) {
-            println!("is block at {0}, {1}", self.x_pos + dx, self.z_pos + dz);
+        if game_map.is_block(self.x_pos + dx, self.z_pos + dz) {
             return;
         }
         self.x_pos += dx;
@@ -42,7 +41,7 @@ impl Player {
     pub fn draw(&mut self) {
         let centre = vec3(
             GRID_SIZE * self.x_pos as f32,
-            GRID_SIZE,
+            0.0,
             GRID_SIZE * self.z_pos as f32,
         );
         draw_sphere(centre, GRID_SIZE / 3.0, None, YELLOW);
