@@ -11,15 +11,8 @@ async fn main() {
     let mut debug_toggle = false;
 
     let mut cam = CameraSettings {
-        pos_x: 10.0,
-        pos_y: 10.0,
-        pos_z: 10.0,
-        up_x: 0.0,
-        up_y: 1.0,
-        up_z: 0.0,
-        tar_x: 0.0,
-        tar_y: 0.0,
-        tar_z: 0.0,
+        pos: vec3(10.0, 10.0, 10.0),
+        tar: vec3(0.0, 0.0, 0.0),
     };
 
     // main game loop
@@ -37,9 +30,9 @@ async fn main() {
         }
 
         set_camera(&Camera3D {
-            position: vec3(cam.pos_x, cam.pos_y, cam.pos_z),
-            up: vec3(cam.up_x, cam.up_y, cam.up_z),
-            target: vec3(cam.tar_x, cam.tar_y, cam.tar_z),
+            position: cam.pos,
+            up: vec3(0.0, 1.0, 0.0),
+            target: cam.tar,
             ..Default::default()
         });
 
