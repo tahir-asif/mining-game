@@ -1,8 +1,10 @@
 use crate::debug::*;
+use crate::grid::*;
 use crate::player::*;
 use macroquad::prelude::*;
 
 pub mod debug;
+pub mod grid;
 pub mod player;
 
 const CAM_DISTANCE: f32 = 10.0;
@@ -11,7 +13,6 @@ const CAM_DISTANCE: f32 = 10.0;
 async fn main() {
     let mut player = Player::new(0.5, 0.5);
     let mut debug_toggle = false;
-
     let mut cam = CameraSettings {
         pos: vec3(CAM_DISTANCE, CAM_DISTANCE, CAM_DISTANCE),
         tar: vec3(0.0, 0.0, 0.0),
@@ -22,11 +23,9 @@ async fn main() {
         if is_key_down(KeyCode::LeftSuper) & is_key_pressed(KeyCode::W) {
             break; // end game
         }
-
         if is_key_pressed(KeyCode::Enter) {
             debug_toggle = !debug_toggle;
         }
-
         if debug_toggle {
             debug(&mut cam, &mut player);
         }
@@ -39,8 +38,7 @@ async fn main() {
         });
 
         clear_background(GRAY);
-
-        draw_grid(20, 1.0, RED, BLUE);
+        grid();
 
         player.handle_input(&mut cam);
         player.draw();

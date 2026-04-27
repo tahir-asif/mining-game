@@ -1,6 +1,6 @@
 use macroquad::prelude::*;
 
-use crate::debug::CameraSettings;
+use crate::{debug::CameraSettings, grid::GRID_SIZE};
 
 pub struct Player {
     // no y_pos because it should not move along y-axis
@@ -14,26 +14,25 @@ impl Player {
     }
 
     pub fn handle_input(&mut self, cam: &mut CameraSettings) {
-        let grid_size: f32 = 1.0;
         if is_key_pressed(KeyCode::Right) {
-            self.x_pos += grid_size;
-            cam.tar.x += grid_size;
-            cam.pos.x += grid_size;
+            self.x_pos += GRID_SIZE;
+            cam.tar.x += GRID_SIZE;
+            cam.pos.x += GRID_SIZE;
         }
         if is_key_pressed(KeyCode::Left) {
-            self.x_pos -= grid_size;
-            cam.tar.x -= grid_size;
-            cam.pos.x -= grid_size;
+            self.x_pos -= GRID_SIZE;
+            cam.tar.x -= GRID_SIZE;
+            cam.pos.x -= GRID_SIZE;
         }
         if is_key_pressed(KeyCode::Down) {
-            self.z_pos += grid_size;
-            cam.tar.z += grid_size;
-            cam.pos.z += grid_size;
+            self.z_pos += GRID_SIZE;
+            cam.tar.z += GRID_SIZE;
+            cam.pos.z += GRID_SIZE;
         }
         if is_key_pressed(KeyCode::Up) {
-            self.z_pos -= grid_size;
-            cam.tar.z -= grid_size;
-            cam.pos.z -= grid_size;
+            self.z_pos -= GRID_SIZE;
+            cam.tar.z -= GRID_SIZE;
+            cam.pos.z -= GRID_SIZE;
         }
     }
 
