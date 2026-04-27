@@ -27,7 +27,7 @@ impl GameMap {
 
         for (x, y) in &self.blocks {
             draw_cube(
-                vec3(GRID_SIZE * (*x as f32), GRID_SIZE, GRID_SIZE * (*y as f32)),
+                vec3(GRID_SIZE * (*x as f32), 0.0, GRID_SIZE * (*y as f32)),
                 vec3(GRID_SIZE * 0.8, GRID_SIZE * 0.8, GRID_SIZE * 0.8),
                 None,
                 GREEN,
