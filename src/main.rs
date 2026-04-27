@@ -10,8 +10,8 @@ pub mod player;
 #[macroquad::main("Mining Game")]
 async fn main() {
     let cam_distance = GRID_SIZE * 10.0;
-    let mut player = Player::new(0.0, 0.0);
     let mut debug_toggle = false;
+    let mut player = Player::new(0.0, 0.0);
     let mut cam = CameraSettings {
         pos: vec3(-cam_distance, cam_distance, -cam_distance),
         tar: vec3(0.0, 0.0, 0.0),

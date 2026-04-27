@@ -14,26 +14,20 @@ impl Player {
     }
 
     pub fn handle_input(&mut self, cam: &mut CameraSettings) {
-        if is_key_pressed(KeyCode::Right) {
-            self.x_pos -= GRID_SIZE;
-            cam.tar.x -= GRID_SIZE;
-            cam.pos.x -= GRID_SIZE;
-        }
-        if is_key_pressed(KeyCode::Left) {
-            self.x_pos += GRID_SIZE;
-            cam.tar.x += GRID_SIZE;
-            cam.pos.x += GRID_SIZE;
-        }
-        if is_key_pressed(KeyCode::Down) {
-            self.z_pos -= GRID_SIZE;
-            cam.tar.z -= GRID_SIZE;
-            cam.pos.z -= GRID_SIZE;
-        }
-        if is_key_pressed(KeyCode::Up) {
-            self.z_pos += GRID_SIZE;
-            cam.tar.z += GRID_SIZE;
-            cam.pos.z += GRID_SIZE;
-        }
+        let (dx, dz) = match get_last_key_pressed() {
+            None => return,
+            Some(KeyCode::Up) => (0.0, GRID_SIZE),
+            Some(KeyCode::Down) => (0.0, -GRID_SIZE),
+            Some(KeyCode::Right) => (GRID_SIZE, 0.0),
+            Some(KeyCode::Left) => (-GRID_SIZE, 0.0),
+            _ => return,
+        };
+        self.x_pos += dx;
+        self.z_pos += dz;
+        cam.tar.x += dx;
+        cam.tar.z += dz;
+        cam.pos.x += dx;
+        cam.pos.z += dz;
     }
 
     pub fn draw(&mut self) {
