@@ -20,9 +20,13 @@ impl Player {
         let (dx, dz) = match get_last_key_pressed() {
             None => return,
             Some(KeyCode::Up) => (0, 1),
+            Some(KeyCode::W) => (0, 1),
             Some(KeyCode::Down) => (0, -1),
+            Some(KeyCode::S) => (0, -1),
             Some(KeyCode::Right) => (-1, 0),
+            Some(KeyCode::D) => (-1, 0),
             Some(KeyCode::Left) => (1, 0),
+            Some(KeyCode::A) => (1, 0),
             _ => return,
         };
         if game_map.is_block(self.x_pos + dz, self.z_pos + dz) {
