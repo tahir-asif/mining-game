@@ -15,24 +15,24 @@ impl Player {
 
     pub fn handle_input(&mut self, cam: &mut CameraSettings) {
         if is_key_pressed(KeyCode::Right) {
-            self.x_pos += GRID_SIZE;
-            cam.tar.x += GRID_SIZE;
-            cam.pos.x += GRID_SIZE;
-        }
-        if is_key_pressed(KeyCode::Left) {
             self.x_pos -= GRID_SIZE;
             cam.tar.x -= GRID_SIZE;
             cam.pos.x -= GRID_SIZE;
         }
-        if is_key_pressed(KeyCode::Down) {
-            self.z_pos += GRID_SIZE;
-            cam.tar.z += GRID_SIZE;
-            cam.pos.z += GRID_SIZE;
+        if is_key_pressed(KeyCode::Left) {
+            self.x_pos += GRID_SIZE;
+            cam.tar.x += GRID_SIZE;
+            cam.pos.x += GRID_SIZE;
         }
-        if is_key_pressed(KeyCode::Up) {
+        if is_key_pressed(KeyCode::Down) {
             self.z_pos -= GRID_SIZE;
             cam.tar.z -= GRID_SIZE;
             cam.pos.z -= GRID_SIZE;
+        }
+        if is_key_pressed(KeyCode::Up) {
+            self.z_pos += GRID_SIZE;
+            cam.tar.z += GRID_SIZE;
+            cam.pos.z += GRID_SIZE;
         }
     }
 

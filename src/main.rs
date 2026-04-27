@@ -13,7 +13,7 @@ async fn main() {
     let mut player = Player::new(0.0, 0.0);
     let mut debug_toggle = false;
     let mut cam = CameraSettings {
-        pos: vec3(cam_distance, cam_distance, cam_distance),
+        pos: vec3(-cam_distance, cam_distance, -cam_distance),
         tar: vec3(0.0, 0.0, 0.0),
     };
 
