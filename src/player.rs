@@ -1,5 +1,6 @@
 use crate::camera::CameraSettings;
-use crate::grid::{GRID_SIZE, GameMap};
+use crate::constants::*;
+use crate::grid::GameMap;
 
 use macroquad::prelude::*;
 
@@ -15,6 +16,39 @@ impl Player {
     }
 
     pub fn handle_input(&mut self, cam: &mut CameraSettings, game_map: &mut GameMap) {
+        self.handle_movement(cam, game_map);
+        self.handle_mining(game_map);
+    }
+
+    pub fn draw(&mut self) {
+        let centre = vec3(
+            GRID_SIZE * self.x_pos as f32,
+            0.0,
+            GRID_SIZE * self.z_pos as f32,
+        );
+        draw_sphere(centre, GRID_SIZE / 3.0, None, YELLOW);
+    }
+
+    fn handle_mining(&mut self, game_map: &mut GameMap) {
+        if !is_key_down(KeyCode::LeftShift) && !is_key_down(KeyCode::RightShift) {
+            return;
+        }
+
+        match get_last_key_pressed() {
+            None => {}
+            Some(KeyCode::Up) => game_map.remove_block(self.x_pos, self.z_pos + 1),
+            Some(KeyCode::W) => game_map.remove_block(self.x_pos, self.z_pos + 1),
+            Some(KeyCode::Down) => game_map.remove_block(self.x_pos, self.z_pos - 1),
+            Some(KeyCode::S) => game_map.remove_block(self.x_pos, self.z_pos - 1),
+            Some(KeyCode::Right) => game_map.remove_block(self.x_pos - 1, self.z_pos),
+            Some(KeyCode::D) => game_map.remove_block(self.x_pos - 1, self.z_pos),
+            Some(KeyCode::Left) => game_map.remove_block(self.x_pos + 1, self.z_pos),
+            Some(KeyCode::A) => game_map.remove_block(self.x_pos + 1, self.z_pos),
+            _ => {}
+        }
+    }
+
+    fn handle_movement(&mut self, cam: &mut CameraSettings, game_map: &mut GameMap) {
         let (dx, dz) = match get_last_key_pressed() {
             None => return,
             Some(KeyCode::Up) => (0, 1),
@@ -27,23 +61,16 @@ impl Player {
             Some(KeyCode::A) => (1, 0),
             _ => return,
         };
+
         if game_map.is_block(self.x_pos + dx, self.z_pos + dz) {
             return;
         }
+
         self.x_pos += dx;
         self.z_pos += dz;
         cam.tar.x += dx;
         cam.tar.z += dz;
         cam.pos.x += dx;
         cam.pos.z += dz;
-    }
-
-    pub fn draw(&mut self) {
-        let centre = vec3(
-            GRID_SIZE * self.x_pos as f32,
-            0.0,
-            GRID_SIZE * self.z_pos as f32,
-        );
-        draw_sphere(centre, GRID_SIZE / 3.0, None, YELLOW);
     }
 }

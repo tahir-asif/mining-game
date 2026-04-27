@@ -1,11 +1,39 @@
 use crate::camera::{CameraSettings, Point};
-use crate::grid::GRID_SIZE;
+use crate::constants::*;
 use crate::player::Player;
 
 use macroquad::prelude::*;
 use macroquad::ui::{hash, root_ui};
 
-pub fn debug(cam: &mut CameraSettings, top_down_camera_toggle: bool, player: &mut Player) {
+pub fn debug_controls(
+    camera: &mut CameraSettings,
+    top_down_camera_toggle: &mut bool,
+    player: &mut Player,
+    debug_toggle: &mut bool,
+) {
+    if is_key_pressed(KeyCode::Enter) {
+        *debug_toggle = !*debug_toggle;
+    }
+
+    if is_key_pressed(KeyCode::P) {
+        // if toggling off top down mode, reset camera
+        if *top_down_camera_toggle {
+            camera.pos = Point::new(
+                player.x_pos - CAM_DISTANCE,
+                CAM_DISTANCE,
+                player.z_pos - CAM_DISTANCE,
+            );
+            camera.up = Point::new(0, 1, 0);
+        }
+        *top_down_camera_toggle = !*top_down_camera_toggle;
+    }
+
+    if *debug_toggle {
+        debug(camera, *top_down_camera_toggle, player);
+    }
+}
+
+fn debug(cam: &mut CameraSettings, top_down_camera_toggle: bool, player: &mut Player) {
     draw_grid_ex(
         100,
         GRID_SIZE,

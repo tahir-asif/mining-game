@@ -1,4 +1,4 @@
-use crate::grid::GRID_SIZE;
+use crate::constants::*;
 
 use macroquad::prelude::*;
 

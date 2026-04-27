@@ -1,6 +1,5 @@
+use crate::constants::*;
 use macroquad::prelude::*;
-
-pub const GRID_SIZE: f32 = 1.0;
 
 #[derive(Default)]
 pub struct GameMap {
@@ -25,6 +24,10 @@ impl GameMap {
             return;
         }
         self.blocks.push((x, y));
+    }
+
+    pub fn remove_block(&mut self, x: i32, y: i32) {
+        println!("MINE {0} {1}", x, y);
     }
 
     pub fn draw(&mut self) {
