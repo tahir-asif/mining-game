@@ -10,19 +10,25 @@ pub mod debug;
 pub mod grid;
 pub mod player;
 
+const CAM_DISTANCE: i32 = 10;
+
 #[macroquad::main("Mining Game")]
 async fn main() {
-    let cam_distance = 10;
+    // declare "global" variables
     let mut debug_toggle = false;
     let mut top_down_camera_toggle = false;
+
+    // create objects
     let mut player = Player::new(0, 0);
     let mut game_map: GameMap = Default::default();
-    game_map.grid();
     let mut camera = CameraSettings {
-        pos: Point::new(-cam_distance, cam_distance, -cam_distance),
+        pos: Point::new(-CAM_DISTANCE, CAM_DISTANCE, -CAM_DISTANCE),
         up: Point::new(0, 1, 0),
         tar: Point::new(0, 0, 0),
     };
+
+    // initilise game map
+    game_map.grid();
 
     // main game loop
     loop {
@@ -37,25 +43,41 @@ async fn main() {
         player.handle_input(&mut camera, &mut game_map);
         player.draw();
 
-        if is_key_pressed(KeyCode::Enter) {
-            debug_toggle = !debug_toggle;
-        }
-        if is_key_pressed(KeyCode::P) {
-            // if toggling it off, reset camera
-            if top_down_camera_toggle {
-                camera.pos = Point::new(
-                    player.x_pos - cam_distance,
-                    cam_distance,
-                    player.z_pos - cam_distance,
-                );
-                camera.up = Point::new(0, 1, 0);
-            }
-            top_down_camera_toggle = !top_down_camera_toggle;
-        }
-        if debug_toggle {
-            debug(&mut camera, top_down_camera_toggle, &mut player);
-        }
+        debug_controls(
+            &mut camera,
+            &mut top_down_camera_toggle,
+            &mut player,
+            &mut debug_toggle,
+        );
 
         next_frame().await
+    }
+}
+
+fn debug_controls(
+    camera: &mut CameraSettings,
+    top_down_camera_toggle: &mut bool,
+    player: &mut Player,
+    debug_toggle: &mut bool,
+) {
+    if is_key_pressed(KeyCode::Enter) {
+        *debug_toggle = !*debug_toggle;
+    }
+
+    if is_key_pressed(KeyCode::P) {
+        // if toggling off top down mode, reset camera
+        if *top_down_camera_toggle {
+            camera.pos = Point::new(
+                player.x_pos - CAM_DISTANCE,
+                CAM_DISTANCE,
+                player.z_pos - CAM_DISTANCE,
+            );
+            camera.up = Point::new(0, 1, 0);
+        }
+        *top_down_camera_toggle = !*top_down_camera_toggle;
+    }
+
+    if *debug_toggle {
+        debug(camera, *top_down_camera_toggle, player);
     }
 }

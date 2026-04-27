@@ -10,7 +10,7 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(x_pos: i32, z_pos: i32) -> Player {
+    pub const fn new(x_pos: i32, z_pos: i32) -> Player {
         Player { x_pos, z_pos }
     }
 
