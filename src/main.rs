@@ -22,12 +22,6 @@ async fn main() {
         if is_key_down(KeyCode::LeftSuper) & is_key_pressed(KeyCode::W) {
             break; // end game
         }
-        if is_key_pressed(KeyCode::Enter) {
-            debug_toggle = !debug_toggle;
-        }
-        if debug_toggle {
-            debug(&mut cam, &mut player);
-        }
 
         set_camera(&Camera3D {
             position: cam.pos,
@@ -41,6 +35,13 @@ async fn main() {
 
         player.handle_input(&mut cam);
         player.draw();
+
+        if is_key_pressed(KeyCode::Enter) {
+            debug_toggle = !debug_toggle;
+        }
+        if debug_toggle {
+            debug(&mut cam, &mut player);
+        }
 
         next_frame().await
     }

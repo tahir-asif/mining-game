@@ -1,3 +1,4 @@
+use crate::grid::GRID_SIZE;
 use crate::player::Player;
 use macroquad::prelude::*;
 use macroquad::ui::{hash, root_ui};
@@ -8,6 +9,15 @@ pub struct CameraSettings {
 }
 
 pub fn debug(cam: &mut CameraSettings, player: &mut Player) {
+    draw_grid_ex(
+        100,
+        GRID_SIZE,
+        RED,
+        BLUE,
+        vec3(GRID_SIZE / 2.0, 0.0, GRID_SIZE / 2.0),
+        Quat::IDENTITY,
+    );
+
     root_ui().window(hash!(), vec2(1.0, 1.0), vec2(150.0, 80.0), |ui| {
         // camera position
         ui.label(vec2(5.0, 1.0), "Camera Position");
