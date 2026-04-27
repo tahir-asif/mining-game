@@ -1,6 +1,6 @@
 use macroquad::prelude::*;
 
-pub const GRID_SIZE: f32 = 1.0;
+pub const GRID_SIZE: f32 = 10.0;
 
 pub fn grid() {
     draw_grid_ex(
@@ -8,7 +8,7 @@ pub fn grid() {
         GRID_SIZE,
         RED,
         BLUE,
-        vec3(0.0, 0.0, 0.0),
+        vec3(GRID_SIZE / 2.0, 0.0, GRID_SIZE / 2.0),
         Quat::IDENTITY,
     );
 
