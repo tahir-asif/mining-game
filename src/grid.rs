@@ -23,6 +23,8 @@ impl GameMap {
     }
 
     pub fn draw(&mut self) {
+        clear_background(GRAY);
+
         for (x, y) in &self.blocks {
             draw_cube(
                 vec3(GRID_SIZE * (*x as f32), GRID_SIZE, GRID_SIZE * (*y as f32)),

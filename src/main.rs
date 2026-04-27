@@ -32,7 +32,6 @@ async fn main() {
 
         camera.set();
 
-        clear_background(GRAY);
         game_map.draw();
 
         player.handle_input(&mut camera, &mut game_map);
@@ -42,9 +41,13 @@ async fn main() {
             debug_toggle = !debug_toggle;
         }
         if is_key_pressed(KeyCode::P) {
+            // if toggling it off, reset camera
             if top_down_camera_toggle {
-                // if toggling it off, reset camera
-                camera.pos = Point::new(-cam_distance, cam_distance, -cam_distance);
+                camera.pos = Point::new(
+                    player.x_pos - cam_distance,
+                    cam_distance,
+                    player.z_pos - cam_distance,
+                );
                 camera.up = Point::new(0, 1, 0);
             }
             top_down_camera_toggle = !top_down_camera_toggle;
