@@ -1,9 +1,7 @@
-use macroquad::prelude::*;
+use crate::camera::CameraSettings;
+use crate::grid::{GRID_SIZE, GameMap};
 
-use crate::{
-    debug::CameraSettings,
-    grid::{GRID_SIZE, GameMap},
-};
+use macroquad::prelude::*;
 
 pub struct Player {
     // no y_pos because it should not move along y-axis
@@ -35,10 +33,10 @@ impl Player {
         }
         self.x_pos += dx;
         self.z_pos += dz;
-        cam.tar.x += GRID_SIZE * dx as f32;
-        cam.tar.z += GRID_SIZE * dz as f32;
-        cam.pos.x += GRID_SIZE * dx as f32;
-        cam.pos.z += GRID_SIZE * dz as f32;
+        cam.tar.x += dx;
+        cam.tar.z += dz;
+        cam.pos.x += dx;
+        cam.pos.z += dz;
     }
 
     pub fn draw(&mut self) {

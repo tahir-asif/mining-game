@@ -1,13 +1,9 @@
+use crate::camera::{CameraSettings, Point};
 use crate::grid::GRID_SIZE;
 use crate::player::Player;
+
 use macroquad::prelude::*;
 use macroquad::ui::{hash, root_ui};
-
-pub struct CameraSettings {
-    pub pos: Vec3,
-    pub up: Vec3,
-    pub tar: Vec3,
-}
 
 pub fn debug(cam: &mut CameraSettings, top_down_camera_toggle: bool, player: &mut Player) {
     draw_grid_ex(
@@ -43,17 +39,9 @@ pub fn debug(cam: &mut CameraSettings, top_down_camera_toggle: bool, player: &mu
     });
 
     if top_down_camera_toggle {
-        cam.pos = vec3(
-            (player.x_pos as f32) * GRID_SIZE,
-            GRID_SIZE * 10.0,
-            (player.z_pos as f32) * GRID_SIZE,
-        );
-        cam.up = vec3(0.0, 0.0, 1.0);
-        cam.tar = vec3(
-            (player.x_pos as f32) * GRID_SIZE,
-            0.0,
-            (player.z_pos as f32) * GRID_SIZE,
-        );
+        cam.pos = Point::new(player.x_pos, 10, player.z_pos);
+        cam.up = Point::new(0, 0, 1);
+        cam.tar = Point::new(player.x_pos, 0, player.z_pos);
         return;
     }
 
@@ -61,44 +49,44 @@ pub fn debug(cam: &mut CameraSettings, top_down_camera_toggle: bool, player: &mu
         None => {}
         Some(KeyCode::J) => {
             if is_key_down(KeyCode::LeftShift) {
-                cam.pos.x -= 1.0
+                cam.pos.x -= 1;
             } else {
-                cam.pos.x += 1.0
+                cam.pos.x += 1;
             }
         }
         Some(KeyCode::K) => {
             if is_key_down(KeyCode::LeftShift) {
-                cam.pos.y -= 1.0
+                cam.pos.y -= 1;
             } else {
-                cam.pos.y += 1.0
+                cam.pos.y += 1;
             }
         }
         Some(KeyCode::L) => {
             if is_key_down(KeyCode::LeftShift) {
-                cam.pos.z -= 1.0
+                cam.pos.z -= 1;
             } else {
-                cam.pos.z += 1.0
+                cam.pos.z += 1;
             }
         }
         Some(KeyCode::U) => {
             if is_key_down(KeyCode::LeftShift) {
-                cam.tar.x -= 1.0
+                cam.tar.x -= 1;
             } else {
-                cam.tar.x += 1.0
+                cam.tar.x += 1;
             }
         }
         Some(KeyCode::I) => {
             if is_key_down(KeyCode::LeftShift) {
-                cam.tar.y -= 1.0
+                cam.tar.y -= 1;
             } else {
-                cam.tar.y += 1.0
+                cam.tar.y += 1;
             }
         }
         Some(KeyCode::O) => {
             if is_key_down(KeyCode::LeftShift) {
-                cam.tar.z -= 1.0
+                cam.tar.z -= 1;
             } else {
-                cam.tar.z += 1.0
+                cam.tar.z += 1;
             }
         }
         _ => {}

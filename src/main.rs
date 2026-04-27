@@ -1,24 +1,27 @@
+use crate::camera::*;
 use crate::debug::*;
 use crate::grid::*;
 use crate::player::*;
+
 use macroquad::prelude::*;
 
+pub mod camera;
 pub mod debug;
 pub mod grid;
 pub mod player;
 
 #[macroquad::main("Mining Game")]
 async fn main() {
-    let cam_distance = GRID_SIZE * 10.0;
+    let cam_distance = 10;
     let mut debug_toggle = false;
     let mut top_down_camera_toggle = false;
     let mut player = Player::new(0, 0);
     let mut game_map = GameMap { blocks: vec![] };
     game_map.grid();
-    let mut cam = CameraSettings {
-        pos: vec3(-cam_distance, cam_distance, -cam_distance),
-        up: vec3(0.0, 1.0, 0.0),
-        tar: vec3(0.0, 0.0, 0.0),
+    let mut camera = CameraSettings {
+        pos: Point::new(-cam_distance, cam_distance, -cam_distance),
+        up: Point::new(0, 1, 0),
+        tar: Point::new(0, 0, 0),
     };
 
     // main game loop
@@ -27,17 +30,12 @@ async fn main() {
             break; // end game
         }
 
-        set_camera(&Camera3D {
-            position: cam.pos,
-            up: cam.up,
-            target: cam.tar,
-            ..Default::default()
-        });
+        camera.set();
 
         clear_background(GRAY);
         game_map.draw();
 
-        player.handle_input(&mut cam, &mut game_map);
+        player.handle_input(&mut camera, &mut game_map);
         player.draw();
 
         if is_key_pressed(KeyCode::Enter) {
@@ -46,13 +44,13 @@ async fn main() {
         if is_key_pressed(KeyCode::P) {
             if top_down_camera_toggle {
                 // if toggling it off, reset camera
-                cam.pos = vec3(-cam_distance, cam_distance, -cam_distance);
-                cam.up = vec3(0.0, 1.0, 0.0);
+                camera.pos = Point::new(-cam_distance, cam_distance, -cam_distance);
+                camera.up = Point::new(0, 1, 0);
             }
             top_down_camera_toggle = !top_down_camera_toggle;
         }
         if debug_toggle {
-            debug(&mut cam, top_down_camera_toggle, &mut player);
+            debug(&mut camera, top_down_camera_toggle, &mut player);
         }
 
         next_frame().await
