@@ -2,13 +2,18 @@ use macroquad::prelude::*;
 
 pub const GRID_SIZE: f32 = 1.0;
 
+#[derive(Default)]
 pub struct GameMap {
     pub blocks: Vec<(i32, i32)>,
 }
 
 impl GameMap {
     pub fn grid(&mut self) {
-        self.new_block(2, 4);
+        self.new_block(2, 6);
+        self.new_block(3, 5);
+        self.new_block(7, 4);
+        self.new_block(2, 2);
+        self.new_block(8, 2);
     }
 
     pub fn is_block(&mut self, x: i32, y: i32) -> bool {

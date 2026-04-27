@@ -1,6 +1,6 @@
-use macroquad::prelude::*;
-
 use crate::grid::GRID_SIZE;
+
+use macroquad::prelude::*;
 
 pub struct Point {
     pub x: i32,

@@ -16,7 +16,7 @@ async fn main() {
     let mut debug_toggle = false;
     let mut top_down_camera_toggle = false;
     let mut player = Player::new(0, 0);
-    let mut game_map = GameMap { blocks: vec![] };
+    let mut game_map: GameMap = Default::default();
     game_map.grid();
     let mut camera = CameraSettings {
         pos: Point::new(-cam_distance, cam_distance, -cam_distance),
