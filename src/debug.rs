@@ -5,10 +5,11 @@ use macroquad::ui::{hash, root_ui};
 
 pub struct CameraSettings {
     pub pos: Vec3,
+    pub up: Vec3,
     pub tar: Vec3,
 }
 
-pub fn debug(cam: &mut CameraSettings, player: &mut Player) {
+pub fn debug(cam: &mut CameraSettings, top_down_camera_toggle: bool, player: &mut Player) {
     draw_grid_ex(
         100,
         GRID_SIZE,
@@ -40,4 +41,66 @@ pub fn debug(cam: &mut CameraSettings, player: &mut Player) {
             &format!("({0}, {1})", player.x_pos, player.z_pos),
         );
     });
+
+    if top_down_camera_toggle {
+        cam.pos = vec3(
+            (player.x_pos as f32) * GRID_SIZE,
+            GRID_SIZE * 10.0,
+            (player.z_pos as f32) * GRID_SIZE,
+        );
+        cam.up = vec3(0.0, 0.0, 1.0);
+        cam.tar = vec3(
+            (player.x_pos as f32) * GRID_SIZE,
+            0.0,
+            (player.z_pos as f32) * GRID_SIZE,
+        );
+        return;
+    }
+
+    match get_last_key_pressed() {
+        None => {}
+        Some(KeyCode::J) => {
+            if is_key_down(KeyCode::LeftShift) {
+                cam.pos.x -= 1.0
+            } else {
+                cam.pos.x += 1.0
+            }
+        }
+        Some(KeyCode::K) => {
+            if is_key_down(KeyCode::LeftShift) {
+                cam.pos.y -= 1.0
+            } else {
+                cam.pos.y += 1.0
+            }
+        }
+        Some(KeyCode::L) => {
+            if is_key_down(KeyCode::LeftShift) {
+                cam.pos.z -= 1.0
+            } else {
+                cam.pos.z += 1.0
+            }
+        }
+        Some(KeyCode::U) => {
+            if is_key_down(KeyCode::LeftShift) {
+                cam.tar.x -= 1.0
+            } else {
+                cam.tar.x += 1.0
+            }
+        }
+        Some(KeyCode::I) => {
+            if is_key_down(KeyCode::LeftShift) {
+                cam.tar.y -= 1.0
+            } else {
+                cam.tar.y += 1.0
+            }
+        }
+        Some(KeyCode::O) => {
+            if is_key_down(KeyCode::LeftShift) {
+                cam.tar.z -= 1.0
+            } else {
+                cam.tar.z += 1.0
+            }
+        }
+        _ => {}
+    };
 }
