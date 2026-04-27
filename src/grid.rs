@@ -1,22 +1,35 @@
 use macroquad::prelude::*;
 
-pub const GRID_SIZE: f32 = 10.0;
+pub const GRID_SIZE: f32 = 1.0;
 
-pub fn grid() {
-    block(1, 1);
-    block(2, 2);
-    block(4, 2);
-    block(3, 2);
-    block(2, 4);
-    block(2, 4);
-    block(3, 3);
+pub struct GameMap {
+    pub blocks: Vec<(i32, i32)>,
 }
 
-fn block(x: u32, y: u32) {
-    draw_cube(
-        vec3((x as f32) * GRID_SIZE, 0.0, (y as f32) * GRID_SIZE),
-        vec3(GRID_SIZE * 0.8, GRID_SIZE * 0.8, GRID_SIZE * 0.8),
-        None,
-        GREEN,
-    );
+impl GameMap {
+    pub fn grid(&mut self) {
+        self.new_block(2, 4);
+    }
+
+    pub fn is_block(&mut self, x: i32, y: i32) -> bool {
+        self.blocks.contains(&(x, y))
+    }
+
+    fn new_block(&mut self, x: i32, y: i32) {
+        if self.is_block(x, y) {
+            return;
+        }
+        self.blocks.push((x, y));
+    }
+
+    pub fn draw(&mut self) {
+        for (x, y) in &self.blocks {
+            draw_cube(
+                vec3(GRID_SIZE * (*x as f32), GRID_SIZE, GRID_SIZE * (*y as f32)),
+                vec3(GRID_SIZE * 0.8, GRID_SIZE * 0.8, GRID_SIZE * 0.8),
+                None,
+                GREEN,
+            );
+        }
+    }
 }

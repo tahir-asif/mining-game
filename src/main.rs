@@ -11,7 +11,9 @@ pub mod player;
 async fn main() {
     let cam_distance = GRID_SIZE * 10.0;
     let mut debug_toggle = false;
-    let mut player = Player::new(0.0, 0.0);
+    let mut player = Player::new(0, 0);
+    let mut game_map = GameMap { blocks: vec![] };
+    game_map.grid();
     let mut cam = CameraSettings {
         pos: vec3(-cam_distance, cam_distance, -cam_distance),
         tar: vec3(0.0, 0.0, 0.0),
@@ -31,9 +33,9 @@ async fn main() {
         });
 
         clear_background(GRAY);
-        grid();
+        game_map.draw();
 
-        player.handle_input(&mut cam);
+        player.handle_input(&mut cam, &mut game_map);
         player.draw();
 
         if is_key_pressed(KeyCode::Enter) {
