@@ -38,6 +38,6 @@ impl Player {
 
     pub fn draw(&mut self) {
         let centre = vec3(self.x_pos, 0.0, self.z_pos);
-        draw_sphere(centre, 0.3, None, YELLOW);
+        draw_sphere(centre, GRID_SIZE / 3.0, None, YELLOW);
     }
 }
