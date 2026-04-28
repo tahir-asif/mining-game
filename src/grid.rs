@@ -29,35 +29,8 @@ impl GameMap {
         self.new_block(5, 3, 3);
     }
 
-    fn is_out_of_bounds(&self, x: usize, y: usize) -> bool {
-        x >= self.width || y >= self.height
-    }
-
-    fn get_block(&mut self, x: usize, y: usize) -> Option<&mut Block> {
-        if self.is_out_of_bounds(x, y) {
-            return None;
-        }
-        self.map[x][y].as_mut()
-    }
-
     pub fn is_block(&mut self, x: usize, y: usize) -> bool {
         self.get_block(x, y).is_some()
-    }
-
-    fn new_block(&mut self, x: usize, y: usize, health: usize) {
-        if self.is_block(x, y) {
-            return;
-        }
-        if x < self.width || y < self.height {
-            self.map[x][y] = Some(Block { x, y, health })
-        }
-    }
-
-    fn remove_block(&mut self, x: usize, y: usize) {
-        if self.is_out_of_bounds(x, y) {
-            return;
-        }
-        self.map[x][y] = None;
     }
 
     pub fn mine_block(&mut self, x: usize, y: usize, mining_power: usize) {
@@ -97,5 +70,33 @@ impl GameMap {
                 }
             }
         }
+    }
+
+    // helper functions
+    fn is_out_of_bounds(&self, x: usize, y: usize) -> bool {
+        x >= self.width || y >= self.height
+    }
+
+    fn get_block(&mut self, x: usize, y: usize) -> Option<&mut Block> {
+        if self.is_out_of_bounds(x, y) {
+            return None;
+        }
+        self.map[x][y].as_mut()
+    }
+
+    fn new_block(&mut self, x: usize, y: usize, health: usize) {
+        if self.is_block(x, y) {
+            return;
+        }
+        if x < self.width || y < self.height {
+            self.map[x][y] = Some(Block { x, y, health })
+        }
+    }
+
+    fn remove_block(&mut self, x: usize, y: usize) {
+        if self.is_out_of_bounds(x, y) {
+            return;
+        }
+        self.map[x][y] = None;
     }
 }
