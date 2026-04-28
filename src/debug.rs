@@ -41,14 +41,7 @@ fn debug(
     top_down_camera_toggle: bool,
     player: &mut Player,
 ) {
-    draw_grid_ex(
-        15,
-        GRID_SIZE,
-        RED,
-        BLUE,
-        vec3(GRID_SIZE / 2.0, 0.0, GRID_SIZE / 2.0),
-        Quat::IDENTITY,
-    );
+    grid(game_map);
 
     root_ui().window(hash!(), vec2(1.0, 1.0), vec2(150.0, 80.0), |ui| {
         // camera position
@@ -126,4 +119,45 @@ fn debug(
         }
         _ => {}
     };
+}
+
+fn scale(unsigned_int: usize) -> f32 {
+    (unsigned_int as f32) * GRID_SIZE
+}
+
+fn grid(game_map: &mut GameMap) {
+    draw_line_3d(
+        vec3(0.0, 0.0, 0.0),
+        vec3(scale(game_map.height), 0.0, 0.0),
+        RED,
+    );
+    draw_line_3d(
+        vec3(0.0, 0.0, 0.0),
+        vec3(0.0, 0.0, scale(game_map.height)),
+        RED,
+    );
+    draw_line_3d(
+        vec3(scale(game_map.height), 0.0, 0.0),
+        vec3(scale(game_map.width), 0.0, scale(game_map.height)),
+        RED,
+    );
+    draw_line_3d(
+        vec3(0.0, 0.0, scale(game_map.height)),
+        vec3(scale(game_map.width), 0.0, scale(game_map.height)),
+        RED,
+    );
+    for i in 1..game_map.width {
+        draw_line_3d(
+            vec3(scale(i), 0.0, 0.0),
+            vec3(scale(i), 0.0, scale(game_map.height)),
+            BLUE,
+        );
+    }
+    for i in 1..game_map.height {
+        draw_line_3d(
+            vec3(0.0, 0.0, scale(i)),
+            vec3(scale(game_map.width), 0.0, scale(i)),
+            BLUE,
+        );
+    }
 }

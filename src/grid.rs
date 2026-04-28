@@ -10,8 +10,8 @@ pub struct Block {
 #[derive(Default)]
 pub struct GameMap {
     pub map: Vec<Vec<Option<Block>>>,
-    width: usize,
-    height: usize,
+    pub width: usize,
+    pub height: usize,
 }
 impl GameMap {
     pub fn new(width: usize, height: usize) -> Self {

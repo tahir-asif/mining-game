@@ -58,18 +58,20 @@ impl Player {
             return;
         }
 
-        // don't move camera if player shouldn't move
-        if !(self.x_pos == 0 && dx == -1) {
-            cam.tar.x += dx;
-            cam.pos.x += dx;
-        }
-        if !(self.z_pos == 0 && dz == -1) {
-            cam.tar.z += dz;
-            cam.pos.z += dz;
+        // move player in x direction
+        let move_x = self.x_pos.saturating_add_signed(dx);
+        if move_x <= game_map.width {
+            self.x_pos = move_x;
+            cam.pos.x = move_x as isize - CAM_DISTANCE;
+            cam.tar.x = move_x as isize;
         }
 
-        // move player
-        self.x_pos = self.x_pos.saturating_add_signed(dx);
-        self.z_pos = self.z_pos.saturating_add_signed(dz);
+        // move player in z direction
+        let move_z = self.z_pos.saturating_add_signed(dz);
+        if move_z <= game_map.width {
+            self.z_pos = move_z;
+            cam.pos.z = move_z as isize - CAM_DISTANCE;
+            cam.tar.z = move_z as isize;
+        }
     }
 }
