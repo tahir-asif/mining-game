@@ -5,6 +5,7 @@ use macroquad::prelude::*;
 pub struct Block {
     x: usize,
     y: usize,
+    health: usize,
 }
 
 #[derive(Default)]
@@ -23,34 +24,49 @@ impl GameMap {
     }
 
     pub fn generate_level(&mut self) {
-        self.new_block(3, 3);
-        self.new_block(1, 3);
-        self.new_block(5, 3);
+        self.new_block(3, 3, 5);
+        self.new_block(1, 2, 4);
+        self.new_block(5, 3, 3);
     }
 
-    fn get_block(&mut self, x: usize, y: usize) -> Option<&Block> {
+    fn get_block(&mut self, x: usize, y: usize) -> Option<&mut Block> {
         if x >= self.width || y >= self.height {
             return None;
         }
-        self.map[x][y].as_ref()
+        self.map[x][y].as_mut()
     }
 
     pub fn is_block(&mut self, x: usize, y: usize) -> bool {
         self.get_block(x, y).is_some()
     }
 
-    fn new_block(&mut self, x: usize, y: usize) {
+    fn new_block(&mut self, x: usize, y: usize, health: usize) {
         if self.is_block(x, y) {
             return;
         }
         if x < self.width || y < self.height {
-            self.map[x][y] = Some(Block { x, y })
+            self.map[x][y] = Some(Block { x, y, health })
         }
     }
 
-    pub fn remove_block(&mut self, x: usize, y: usize) {
+    fn remove_block(&mut self, x: usize, y: usize) {
         if x < self.width && y < self.height {
             self.map[x][y] = None;
+        }
+    }
+
+    pub fn mine_block(&mut self, x: usize, y: usize, mining_power: usize) {
+        if x >= self.width || y >= self.height {
+            return;
+        }
+        match self.get_block(x, y) {
+            None => {}
+            Some(block) => {
+                block.health = block.health.saturating_sub(mining_power);
+                if block.health == 0 {
+                    self.remove_block(x, y);
+                }
+            }
         }
     }
 

@@ -44,9 +44,10 @@ impl Player {
 
         // mine if holding shift while moving
         if is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift) {
-            game_map.remove_block(
+            game_map.mine_block(
                 self.x_pos.saturating_add_signed(dx),
                 self.z_pos.saturating_add_signed(dz),
+                1,
             );
         }
 
