@@ -1,5 +1,5 @@
 use crate::camera::{CameraSettings, Point};
-use crate::constants::*;
+use crate::constants::{CAM_DISTANCE, GRID_SIZE};
 use crate::grid::GameMap;
 use crate::player::Player;
 
@@ -43,6 +43,53 @@ fn debug(
 ) {
     grid(game_map);
 
+    window_overlay(cam, player);
+
+    debug_camera(cam, player, top_down_camera_toggle);
+}
+
+fn scale(unsigned_int: usize) -> f32 {
+    (unsigned_int as f32) * GRID_SIZE
+}
+
+fn grid(game_map: &mut GameMap) {
+    draw_line_3d(
+        vec3(0.0, 0.0, 0.0),
+        vec3(scale(game_map.height), 0.0, 0.0),
+        RED,
+    );
+    draw_line_3d(
+        vec3(0.0, 0.0, 0.0),
+        vec3(0.0, 0.0, scale(game_map.height)),
+        RED,
+    );
+    draw_line_3d(
+        vec3(scale(game_map.height), 0.0, 0.0),
+        vec3(scale(game_map.width), 0.0, scale(game_map.height)),
+        RED,
+    );
+    draw_line_3d(
+        vec3(0.0, 0.0, scale(game_map.height)),
+        vec3(scale(game_map.width), 0.0, scale(game_map.height)),
+        RED,
+    );
+    for i in 1..game_map.width {
+        draw_line_3d(
+            vec3(scale(i), 0.0, 0.0),
+            vec3(scale(i), 0.0, scale(game_map.height)),
+            BLUE,
+        );
+    }
+    for i in 1..game_map.height {
+        draw_line_3d(
+            vec3(0.0, 0.0, scale(i)),
+            vec3(scale(game_map.width), 0.0, scale(i)),
+            BLUE,
+        );
+    }
+}
+
+fn window_overlay(cam: &mut CameraSettings, player: &mut Player) {
     root_ui().window(hash!(), vec2(1.0, 1.0), vec2(150.0, 80.0), |ui| {
         // camera position
         ui.label(vec2(5.0, 1.0), "Camera Position");
@@ -65,7 +112,9 @@ fn debug(
             &format!("({0}, {1})", player.x_pos, player.z_pos),
         );
     });
+}
 
+fn debug_camera(cam: &mut CameraSettings, player: &mut Player, top_down_camera_toggle: bool) {
     if top_down_camera_toggle {
         cam.pos = Point::new(player.x_pos.cast_signed(), 10, player.z_pos.cast_signed());
         cam.up = Point::new(0, 0, 1);
@@ -119,45 +168,4 @@ fn debug(
         }
         _ => {}
     };
-}
-
-fn scale(unsigned_int: usize) -> f32 {
-    (unsigned_int as f32) * GRID_SIZE
-}
-
-fn grid(game_map: &mut GameMap) {
-    draw_line_3d(
-        vec3(0.0, 0.0, 0.0),
-        vec3(scale(game_map.height), 0.0, 0.0),
-        RED,
-    );
-    draw_line_3d(
-        vec3(0.0, 0.0, 0.0),
-        vec3(0.0, 0.0, scale(game_map.height)),
-        RED,
-    );
-    draw_line_3d(
-        vec3(scale(game_map.height), 0.0, 0.0),
-        vec3(scale(game_map.width), 0.0, scale(game_map.height)),
-        RED,
-    );
-    draw_line_3d(
-        vec3(0.0, 0.0, scale(game_map.height)),
-        vec3(scale(game_map.width), 0.0, scale(game_map.height)),
-        RED,
-    );
-    for i in 1..game_map.width {
-        draw_line_3d(
-            vec3(scale(i), 0.0, 0.0),
-            vec3(scale(i), 0.0, scale(game_map.height)),
-            BLUE,
-        );
-    }
-    for i in 1..game_map.height {
-        draw_line_3d(
-            vec3(0.0, 0.0, scale(i)),
-            vec3(scale(game_map.width), 0.0, scale(i)),
-            BLUE,
-        );
-    }
 }
