@@ -2,7 +2,7 @@ use crate::constants::*;
 use macroquad::prelude::*;
 
 #[derive(Clone)]
-struct Block {
+pub struct Block {
     x: usize,
     y: usize,
 }
