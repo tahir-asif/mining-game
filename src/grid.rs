@@ -2,7 +2,7 @@ use crate::constants::*;
 use macroquad::prelude::*;
 
 #[derive(Clone)]
-pub struct Block {
+struct Block {
     x: usize,
     y: usize,
     health: usize,
@@ -10,7 +10,7 @@ pub struct Block {
 
 #[derive(Default)]
 pub struct GameMap {
-    pub map: Vec<Vec<Option<Block>>>,
+    map: Vec<Vec<Option<Block>>>,
     pub width: usize,
     pub height: usize,
 }
