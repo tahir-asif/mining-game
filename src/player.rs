@@ -5,13 +5,13 @@ use crate::grid::GameMap;
 use macroquad::prelude::*;
 
 pub struct Player {
-    // no y_pos because it should not move along y-axis
-    pub x_pos: i32,
-    pub z_pos: i32,
+    // no y_pos because it should not move along y-axis; y is 3d up/down
+    pub x_pos: usize,
+    pub z_pos: usize,
 }
 
 impl Player {
-    pub const fn new(x_pos: i32, z_pos: i32) -> Player {
+    pub const fn new(x_pos: usize, z_pos: usize) -> Player {
         Player { x_pos, z_pos }
     }
 
@@ -49,7 +49,7 @@ impl Player {
     }
 
     fn handle_movement(&mut self, cam: &mut CameraSettings, game_map: &mut GameMap) {
-        let (dx, dz) = match get_last_key_pressed() {
+        let (dx, dz): (isize, isize) = match get_last_key_pressed() {
             None => return,
             Some(KeyCode::Up) => (0, 1),
             Some(KeyCode::W) => (0, 1),
@@ -62,15 +62,26 @@ impl Player {
             _ => return,
         };
 
-        if game_map.is_block(self.x_pos + dx, self.z_pos + dz) {
+        // don't move if block is in the way
+        if game_map.is_block(
+            self.x_pos.saturating_add_signed(dx),
+            self.z_pos.saturating_add_signed(dz),
+        ) {
             return;
         }
 
-        self.x_pos += dx;
-        self.z_pos += dz;
-        cam.tar.x += dx;
-        cam.tar.z += dz;
-        cam.pos.x += dx;
-        cam.pos.z += dz;
+        // don't move camera if player shouldn't move
+        if !(self.x_pos == 0 && dx == -1) {
+            cam.tar.x += dx;
+            cam.pos.x += dx;
+        }
+        if !(self.z_pos == 0 && dz == -1) {
+            cam.tar.z += dz;
+            cam.pos.z += dz;
+        }
+
+        // move player
+        self.x_pos = self.x_pos.saturating_add_signed(dx);
+        self.z_pos = self.z_pos.saturating_add_signed(dz);
     }
 }

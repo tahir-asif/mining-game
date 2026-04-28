@@ -1,15 +1,17 @@
 use crate::camera::{CameraSettings, Point};
 use crate::constants::*;
+use crate::grid::GameMap;
 use crate::player::Player;
 
 use macroquad::prelude::*;
 use macroquad::ui::{hash, root_ui};
 
 pub fn debug_controls(
+    debug_toggle: &mut bool,
+    game_map: &mut GameMap,
     camera: &mut CameraSettings,
     top_down_camera_toggle: &mut bool,
     player: &mut Player,
-    debug_toggle: &mut bool,
 ) {
     if is_key_pressed(KeyCode::Enter) {
         *debug_toggle = !*debug_toggle;
@@ -19,9 +21,9 @@ pub fn debug_controls(
         // if toggling off top down mode, reset camera
         if *top_down_camera_toggle {
             camera.pos = Point::new(
-                player.x_pos - CAM_DISTANCE,
+                player.x_pos.cast_signed() - CAM_DISTANCE,
                 CAM_DISTANCE,
-                player.z_pos - CAM_DISTANCE,
+                player.z_pos.cast_signed() - CAM_DISTANCE,
             );
             camera.up = Point::new(0, 1, 0);
         }
@@ -29,13 +31,18 @@ pub fn debug_controls(
     }
 
     if *debug_toggle {
-        debug(camera, *top_down_camera_toggle, player);
+        debug(game_map, camera, *top_down_camera_toggle, player);
     }
 }
 
-fn debug(cam: &mut CameraSettings, top_down_camera_toggle: bool, player: &mut Player) {
+fn debug(
+    game_map: &mut GameMap,
+    cam: &mut CameraSettings,
+    top_down_camera_toggle: bool,
+    player: &mut Player,
+) {
     draw_grid_ex(
-        100,
+        15,
         GRID_SIZE,
         RED,
         BLUE,
@@ -67,9 +74,9 @@ fn debug(cam: &mut CameraSettings, top_down_camera_toggle: bool, player: &mut Pl
     });
 
     if top_down_camera_toggle {
-        cam.pos = Point::new(player.x_pos, 10, player.z_pos);
+        cam.pos = Point::new(player.x_pos.cast_signed(), 10, player.z_pos.cast_signed());
         cam.up = Point::new(0, 0, 1);
-        cam.tar = Point::new(player.x_pos, 0, player.z_pos);
+        cam.tar = Point::new(player.x_pos.cast_signed(), 0, player.z_pos.cast_signed());
         return;
     }
 

@@ -20,15 +20,13 @@ async fn main() {
 
     // create objects
     let mut player = Player::new(0, 0);
-    let mut game_map: GameMap = Default::default();
+    let mut game_map = GameMap::new(15, 15);
+    game_map.generate_level();
     let mut camera = CameraSettings {
         pos: Point::new(-CAM_DISTANCE, CAM_DISTANCE, -CAM_DISTANCE),
         up: Point::new(0, 1, 0),
         tar: Point::new(0, 0, 0),
     };
-
-    // initilise game map
-    game_map.grid();
 
     // main game loop
     loop {
@@ -44,10 +42,11 @@ async fn main() {
         player.draw();
 
         debug_controls(
+            &mut debug_toggle,
+            &mut game_map,
             &mut camera,
             &mut top_down_camera_toggle,
             &mut player,
-            &mut debug_toggle,
         );
 
         next_frame().await

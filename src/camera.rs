@@ -3,13 +3,13 @@ use crate::constants::*;
 use macroquad::prelude::*;
 
 pub struct Point {
-    pub x: i32,
-    pub y: i32,
-    pub z: i32,
+    pub x: isize,
+    pub y: isize,
+    pub z: isize,
 }
 
 impl Point {
-    pub const fn new(x: i32, y: i32, z: i32) -> Point {
+    pub const fn new(x: isize, y: isize, z: isize) -> Point {
         Point { x, y, z }
     }
 }
