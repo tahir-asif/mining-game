@@ -95,8 +95,8 @@ impl GameMap {
     }
 
     // helper functions
-    fn is_out_of_bounds(&self, x: usize, y: usize) -> bool {
-        x >= self.width || y >= self.height
+    fn is_out_of_bounds(&self, x: usize, z: usize) -> bool {
+        x >= self.width || z >= self.height
     }
 
     fn get_block(&mut self, x: usize, y: usize) -> Option<&mut Block> {
@@ -106,13 +106,14 @@ impl GameMap {
         self.map[x][y].as_mut()
     }
 
-    fn new_block(&mut self, x: usize, y: usize, health: usize) {
-        if self.is_block(x, y) {
+    fn new_block(&mut self, x: usize, z: usize, health: usize) {
+        if self.is_block(x, z) {
             return;
         }
-        if x < self.width || y < self.height {
-            self.map[x][y] = Some(Block::new(x, y, health))
+        if self.is_out_of_bounds(x, z) {
+            return;
         }
+        self.map[x][z] = Some(Block::new(x, z, health))
     }
 
     fn remove_block(&mut self, x: usize, y: usize) {

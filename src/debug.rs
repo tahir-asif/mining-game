@@ -21,9 +21,9 @@ pub fn debug_controls(
         // if toggling off top down mode, reset camera
         if *top_down_camera_toggle {
             camera.pos = Point::new(
-                player.x_pos.cast_signed() - CAM_DISTANCE,
+                player.x.cast_signed() - CAM_DISTANCE,
                 CAM_DISTANCE,
-                player.z_pos.cast_signed() - CAM_DISTANCE,
+                player.z.cast_signed() - CAM_DISTANCE,
             );
             camera.up = Point::new(0, 1, 0);
         }
@@ -107,18 +107,15 @@ fn window_overlay(cam: &mut CameraSettings, player: &mut Player) {
 
         // player position
         ui.label(vec2(5.0, 41.0), "Player Position");
-        ui.label(
-            vec2(5.0, 51.0),
-            &format!("({0}, {1})", player.x_pos, player.z_pos),
-        );
+        ui.label(vec2(5.0, 51.0), &format!("({0}, {1})", player.x, player.z));
     });
 }
 
 fn debug_camera(cam: &mut CameraSettings, player: &mut Player, top_down_camera_toggle: bool) {
     if top_down_camera_toggle {
-        cam.pos = Point::new(player.x_pos.cast_signed(), 10, player.z_pos.cast_signed());
+        cam.pos = Point::new(player.x.cast_signed(), 10, player.z.cast_signed());
         cam.up = Point::new(0, 0, 1);
-        cam.tar = Point::new(player.x_pos.cast_signed(), 0, player.z_pos.cast_signed());
+        cam.tar = Point::new(player.x.cast_signed(), 0, player.z.cast_signed());
         return;
     }
 

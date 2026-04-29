@@ -19,8 +19,8 @@ async fn main() {
     let mut top_down_camera_toggle = false;
 
     // create objects
-    let mut player = Player::new(0, 0);
-    let mut game_map = GameMap::new(15, 15);
+    let mut player = Player { x: 0, z: 0 };
+    let mut game_map = GameMap::new(10, 10);
     game_map.generate_level();
     let mut camera = CameraSettings {
         pos: Point::new(-CAM_DISTANCE, CAM_DISTANCE, -CAM_DISTANCE),
