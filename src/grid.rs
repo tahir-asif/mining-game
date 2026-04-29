@@ -74,25 +74,20 @@ impl GameMap {
     pub fn draw(&mut self) {
         clear_background(GRAY);
 
-        for row in &self.map {
-            for option_block in row {
-                match option_block {
-                    None => continue,
-                    Some(block) => {
-                        draw_cube(
-                            vec3(
-                                GRID_SIZE * (block.x as f32),
-                                0.0,
-                                GRID_SIZE * (block.y as f32),
-                            ),
-                            vec3(GRID_SIZE * 0.8, GRID_SIZE * 0.8, GRID_SIZE * 0.8),
-                            None,
-                            block.colour(),
-                        );
-                    }
-                }
+        self.map.iter().flatten().for_each(|maybe_block| {
+            if let Some(block) = maybe_block {
+                draw_cube(
+                    vec3(
+                        GRID_SIZE * (block.x as f32),
+                        0.0,
+                        GRID_SIZE * (block.y as f32),
+                    ),
+                    vec3(GRID_SIZE * 0.8, GRID_SIZE * 0.8, GRID_SIZE * 0.8),
+                    None,
+                    block.colour(),
+                );
             }
-        }
+        });
     }
 
     // helper functions
