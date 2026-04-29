@@ -12,7 +12,18 @@ pub mod debug;
 pub mod grid;
 pub mod player;
 
-#[macroquad::main("Mining Game")]
+fn window_conf() -> Conf {
+    Conf {
+        window_title: "Mining Game".to_owned(),
+        fullscreen: false,
+        window_width: WINDOW_WIDTH,
+        window_height: WINDOW_HEIGHT,
+        window_resizable: false,
+        ..Default::default()
+    }
+}
+
+#[macroquad::main(window_conf)]
 async fn main() {
     // declare "global" variables
     let mut debug_toggle = false;
