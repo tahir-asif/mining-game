@@ -1,18 +1,21 @@
-use crate::camera::*;
-use crate::constants::*;
-use crate::debug::*;
-use crate::grid::*;
-use crate::player::*;
-use crate::ui::*;
+// TODO: Implement crystals
+// TODO: Implement chests
+// TODO: Implement unbreakable walls
+// TODO: Implement fog of war
+
+mod camera;
+mod constants;
+mod debug;
+mod grid;
+mod player;
+mod ui;
+
+use crate::camera::{CameraSettings, Point};
+use crate::constants::{CAM_DISTANCE, WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::grid::GameMap;
+use crate::player::Player;
 
 use macroquad::prelude::*;
-
-pub mod camera;
-pub mod constants;
-pub mod debug;
-pub mod grid;
-pub mod player;
-pub mod ui;
 
 fn window_conf() -> Conf {
     Conf {
@@ -58,9 +61,9 @@ async fn main() {
         player.handle_input(&mut camera, &mut game_map);
         player.draw();
 
-        draw_ui(&mut player);
+        ui::draw_ui(&mut player);
 
-        debug_controls(
+        debug::debug_controls(
             &mut debug_toggle,
             &mut game_map,
             &mut camera,
