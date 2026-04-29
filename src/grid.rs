@@ -7,6 +7,28 @@ struct Block {
     y: usize,
     health: usize,
 }
+impl Block {
+    fn new(x: usize, y: usize, health: usize) -> Self {
+        Block { x, y, health }
+    }
+
+    fn mine(&mut self, mining_power: usize) {
+        self.health = self.health.saturating_sub(mining_power);
+    }
+
+    fn colour(&self) -> Color {
+        match self.health {
+            1 => RED,
+            2 => ORANGE,
+            3 => YELLOW,
+            4 => GREEN,
+            5 => BLUE,
+            6 => PINK,
+            7 => PURPLE,
+            _ => BLACK,
+        }
+    }
+}
 
 #[derive(Default)]
 pub struct GameMap {
@@ -40,7 +62,7 @@ impl GameMap {
         match self.get_block(x, y) {
             None => {}
             Some(block) => {
-                block.health = block.health.saturating_sub(mining_power);
+                block.mine(mining_power);
                 if block.health == 0 {
                     self.remove_block(x, y);
                 }
@@ -64,7 +86,7 @@ impl GameMap {
                             ),
                             vec3(GRID_SIZE * 0.8, GRID_SIZE * 0.8, GRID_SIZE * 0.8),
                             None,
-                            GREEN,
+                            block.colour(),
                         );
                     }
                 }
@@ -89,7 +111,7 @@ impl GameMap {
             return;
         }
         if x < self.width || y < self.height {
-            self.map[x][y] = Some(Block { x, y, health })
+            self.map[x][y] = Some(Block::new(x, y, health))
         }
     }
 
