@@ -3,6 +3,7 @@ use crate::constants::*;
 use crate::debug::*;
 use crate::grid::*;
 use crate::player::*;
+use crate::ui::*;
 
 use macroquad::prelude::*;
 
@@ -11,6 +12,7 @@ pub mod constants;
 pub mod debug;
 pub mod grid;
 pub mod player;
+pub mod ui;
 
 fn window_conf() -> Conf {
     Conf {
@@ -30,7 +32,11 @@ async fn main() {
     let mut top_down_camera_toggle = false;
 
     // create objects
-    let mut player = Player { x: 0, z: 0 };
+    let mut player = Player {
+        x: 0,
+        z: 0,
+        energy: 10,
+    };
     let mut game_map = GameMap::new(10, 10);
     game_map.generate_level();
     let mut camera = CameraSettings {
@@ -51,6 +57,8 @@ async fn main() {
 
         player.handle_input(&mut camera, &mut game_map);
         player.draw();
+
+        draw_ui(&mut player);
 
         debug_controls(
             &mut debug_toggle,

@@ -8,13 +8,10 @@ pub struct Player {
     // no y_pos because it should not move along y-axis; y is 3d up/down
     pub x: usize,
     pub z: usize,
+    pub energy: usize,
 }
 
 impl Player {
-    pub const fn new(x: usize, z: usize) -> Player {
-        Player { x, z }
-    }
-
     pub fn handle_input(&mut self, cam: &mut CameraSettings, game_map: &mut GameMap) {
         self.handle_movement(cam, game_map);
     }
