@@ -55,17 +55,18 @@ impl GameMap {
         self.get_block(x, y).is_some()
     }
 
-    pub fn mine_block(&mut self, x: usize, y: usize, mining_power: usize) {
+    pub fn mine_block(&mut self, x: usize, y: usize, mining_power: usize) -> bool {
         if self.is_out_of_bounds(x, y) {
-            return;
+            return false;
         }
         match self.get_block(x, y) {
-            None => {}
+            None => false,
             Some(block) => {
                 block.mine(mining_power);
                 if block.health == 0 {
                     self.remove_block(x, y);
                 }
+                true
             }
         }
     }

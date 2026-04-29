@@ -36,12 +36,16 @@ impl Player {
         };
 
         // mine if holding shift while moving
-        if is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift) {
-            game_map.mine_block(
+        if (is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift)) && self.energy > 0
+        {
+            let mine_was_successful = game_map.mine_block(
                 self.x.saturating_add_signed(dx),
                 self.z.saturating_add_signed(dz),
                 1,
             );
+            if mine_was_successful {
+                self.energy = self.energy.saturating_sub(1);
+            }
         }
 
         // don't move if block is in the way

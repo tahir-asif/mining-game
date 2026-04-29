@@ -12,4 +12,8 @@ pub fn draw_ui(player: &mut Player) {
         vec2(10.0, WINDOW_HEIGHT - 20.0),
         &format!("ENERGY: {0}", player.energy),
     );
+    root_ui().label(
+        vec2(WINDOW_WIDTH - 100.0, 10.0),
+        &format!("ENERGY: {0}", player.energy),
+    );
 }
