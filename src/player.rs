@@ -11,6 +11,7 @@ pub struct Player {
     pub x: usize,
     pub z: usize,
     pub energy: usize,
+    pub gold: u8,
 }
 
 impl Player {
@@ -48,7 +49,10 @@ impl Player {
             match mine_was_successful {
                 Some(Outcome::Damaged) => self.energy = self.energy.saturating_sub(1),
                 Some(Outcome::Destroyed) => self.energy = self.energy.saturating_sub(1),
-                Some(Outcome::Gained(Drop::Gold)) => self.energy = self.energy.saturating_sub(1),
+                Some(Outcome::Gained(Drop::Gold(amount))) => {
+                    self.energy = self.energy.saturating_sub(1);
+                    self.gold += amount;
+                }
                 Some(Outcome::Gained(Drop::Energy(amount))) => self.energy += amount as usize,
                 Some(Outcome::Gained(_)) => {}
                 Some(Outcome::Unbreakable) => {}

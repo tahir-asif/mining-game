@@ -3,7 +3,7 @@ use macroquad::prelude::*;
 #[derive(Clone)]
 pub enum MiningDrop {
     // TODO: implement MiningDrop drop properly
-    Gold,
+    Gold(u8),
     Energy(u8),
     Item,
 }
@@ -82,7 +82,7 @@ fn mine_rock(health: &mut usize, mining_power: usize) -> MiningOutcome {
 fn mine_ore(health: &mut usize, mining_power: usize) -> MiningOutcome {
     *health = health.saturating_sub(mining_power);
     if *health == 0 {
-        return MiningOutcome::Gained(MiningDrop::Gold);
+        return MiningOutcome::Gained(MiningDrop::Gold(3));
     };
     MiningOutcome::Damaged
 }
