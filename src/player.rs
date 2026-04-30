@@ -1,6 +1,8 @@
 use crate::camera::CameraSettings;
 use crate::constants::*;
 use crate::grid::GameMap;
+use crate::grid::block::MiningDrop as Drop;
+use crate::grid::block::MiningOutcome as Outcome;
 
 use macroquad::prelude::*;
 
@@ -43,8 +45,14 @@ impl Player {
                 self.z.saturating_add_signed(dz),
                 1,
             );
-            if mine_was_successful {
-                self.energy = self.energy.saturating_sub(1);
+            match mine_was_successful {
+                Some(Outcome::Damaged) => self.energy = self.energy.saturating_sub(1),
+                Some(Outcome::Destroyed) => self.energy = self.energy.saturating_sub(1),
+                Some(Outcome::Gained(Drop::Gold)) => self.energy = self.energy.saturating_sub(1),
+                Some(Outcome::Gained(Drop::Energy(amount))) => self.energy += amount as usize,
+                Some(Outcome::Gained(_)) => {}
+                Some(Outcome::Unbreakable) => {}
+                None => {}
             }
         }
 

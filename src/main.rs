@@ -1,6 +1,3 @@
-// TODO: Implement crystals
-// TODO: Implement chests
-// TODO: Implement unbreakable walls
 // TODO: Implement fog of war
 
 mod camera;
@@ -36,17 +33,23 @@ async fn main() {
 
     // create objects
     let mut player = Player {
-        x: 0,
-        z: 0,
-        energy: 10,
+        x: 1,
+        z: 1,
+        energy: 90,
+    };
+    let mut camera = CameraSettings {
+        pos: Point::new(
+            (player.x as isize) - CAM_DISTANCE,
+            CAM_DISTANCE,
+            (player.z as isize) - CAM_DISTANCE,
+        ),
+        up: Point::new(0, 1, 0),
+        tar: Point::new(player.x as isize, 0, player.z as isize),
     };
     let mut game_map = GameMap::new(10, 10);
+
+    // initilise game
     game_map.generate_level();
-    let mut camera = CameraSettings {
-        pos: Point::new(-CAM_DISTANCE, CAM_DISTANCE, -CAM_DISTANCE),
-        up: Point::new(0, 1, 0),
-        tar: Point::new(0, 0, 0),
-    };
 
     // main game loop
     loop {

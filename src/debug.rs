@@ -55,35 +55,35 @@ fn scale(unsigned_int: usize) -> f32 {
 fn grid(game_map: &mut GameMap) {
     draw_line_3d(
         vec3(0.0, 0.0, 0.0),
-        vec3(scale(game_map.height), 0.0, 0.0),
+        vec3(scale(game_map.height - 1), 0.0, 0.0),
         RED,
     );
     draw_line_3d(
         vec3(0.0, 0.0, 0.0),
-        vec3(0.0, 0.0, scale(game_map.height)),
+        vec3(0.0, 0.0, scale(game_map.height - 1)),
         RED,
     );
     draw_line_3d(
-        vec3(scale(game_map.height), 0.0, 0.0),
-        vec3(scale(game_map.width), 0.0, scale(game_map.height)),
+        vec3(scale(game_map.height - 1), 0.0, 0.0),
+        vec3(scale(game_map.width - 1), 0.0, scale(game_map.height - 1)),
         RED,
     );
     draw_line_3d(
-        vec3(0.0, 0.0, scale(game_map.height)),
-        vec3(scale(game_map.width), 0.0, scale(game_map.height)),
+        vec3(0.0, 0.0, scale(game_map.height - 1)),
+        vec3(scale(game_map.width - 1), 0.0, scale(game_map.height - 1)),
         RED,
     );
-    for i in 1..game_map.width {
+    for i in 1..game_map.width - 1 {
         draw_line_3d(
             vec3(scale(i), 0.0, 0.0),
-            vec3(scale(i), 0.0, scale(game_map.height)),
+            vec3(scale(i), 0.0, scale(game_map.height - 1)),
             BLUE,
         );
     }
-    for i in 1..game_map.height {
+    for i in 1..game_map.height - 1 {
         draw_line_3d(
             vec3(0.0, 0.0, scale(i)),
-            vec3(scale(game_map.width), 0.0, scale(i)),
+            vec3(scale(game_map.width - 1), 0.0, scale(i)),
             BLUE,
         );
     }
