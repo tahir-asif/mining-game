@@ -11,7 +11,7 @@ use macroquad::prelude::*;
 
 fn window_conf() -> Conf {
     Conf {
-        window_title: "Mining Game".to_owned(),
+        window_title: "Puzzle Miner".to_owned(),
         fullscreen: false,
         window_width: WINDOW_WIDTH,
         window_height: WINDOW_HEIGHT,
