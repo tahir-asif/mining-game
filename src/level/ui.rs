@@ -1,5 +1,5 @@
 use crate::constants;
-use crate::player::Player;
+use crate::level::player::Player;
 
 use macroquad::prelude::*;
 use macroquad::ui::root_ui;

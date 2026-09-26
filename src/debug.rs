@@ -1,7 +1,8 @@
-use crate::camera::{CameraSettings, Point};
+use crate::camera::CameraSettings;
 use crate::constants::{CAM_DISTANCE, GRID_SIZE};
 use crate::grid::GameMap;
 use crate::player::Player;
+use crate::point::Point;
 
 use macroquad::prelude::*;
 use macroquad::ui::{hash, root_ui};

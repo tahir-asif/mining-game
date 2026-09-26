@@ -2,7 +2,7 @@ use macroquad::prelude::*;
 
 #[derive(Clone)]
 pub enum MiningDrop {
-    // TODO: implement MiningDrop drop properly
+    // MiningDrop: What the player may recieve for mining this block
     Gold(u8),
     Energy(u8),
     Item,
@@ -10,7 +10,7 @@ pub enum MiningDrop {
 
 #[derive(Clone)]
 pub enum MiningOutcome {
-    // TODO: use MiningOutcome to cause an effect
+    // MiningOutcome: The effect of mining this block
     Damaged,
     Destroyed,
     Gained(MiningDrop),
@@ -35,6 +35,12 @@ pub enum Block {
     },
 }
 
+// pub struct Block {
+//     block_type: BlockType,
+//     health: Option<usize>,
+//     mining_drop: Option<MiningDrop>,
+// }
+
 impl Block {
     pub fn mine(&mut self, mining_power: usize) -> MiningOutcome {
         match self {
@@ -45,6 +51,7 @@ impl Block {
             Block::Chest { .. } => mine_chest(),
         }
     }
+
     pub fn colour(&self) -> Color {
         match self {
             Block::Wall => DARKGRAY,
