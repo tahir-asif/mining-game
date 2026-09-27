@@ -21,10 +21,17 @@ impl MapCoords {
         MapCoords { x, z }
     }
 
-    pub fn add(&mut self, to: (isize, isize)) -> (usize, usize) {
-        (
-            self.x.saturating_add_signed(to.0),
-            self.z.saturating_add_signed(to.1),
-        )
+    pub fn add(&mut self, to: (isize, isize)) -> Self {
+        MapCoords {
+            x: self.x.saturating_add_signed(to.0),
+            z: self.z.saturating_add_signed(to.1),
+        }
     }
+
+    // pub fn add(&mut self, to: (isize, isize)) -> (usize, usize) {
+    //     (
+    //         self.x.saturating_add_signed(to.0),
+    //         self.z.saturating_add_signed(to.1),
+    //     )
+    // }
 }

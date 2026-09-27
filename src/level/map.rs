@@ -1,5 +1,5 @@
 use crate::constants::*;
-use crate::level::block::{Block, MiningDrop, MiningOutcome};
+use crate::level::block::{Block, BlockType, MiningOutcome};
 use crate::level::coordinate::MapCoords;
 
 use macroquad::prelude::*;
@@ -20,7 +20,13 @@ impl GameMap {
     }
 
     pub fn generate_level(&mut self) {
-        self.temp();
+        self.add_block(MapCoords::new(4, 3), BlockType::Rock1);
+        self.add_block(MapCoords::new(2, 3), BlockType::Rock2);
+        self.add_block(MapCoords::new(3, 5), BlockType::Rock3);
+        self.add_block(MapCoords::new(6, 6), BlockType::Wall1);
+        self.add_block(MapCoords::new(4, 7), BlockType::Ore1);
+        self.add_block(MapCoords::new(8, 2), BlockType::Crystal1);
+        self.add_block(MapCoords::new(9, 9), BlockType::Chest1);
     }
 
     pub fn draw(&self) {
@@ -41,21 +47,15 @@ impl GameMap {
         }
     }
 
-    pub fn mine_block(&mut self, coords: MapCoords, mining_power: usize) -> Option<MiningOutcome> {
-        match self.get_block(coords) {
-            None => None,
-            Some(block) => match block.mine(mining_power) {
-                MiningOutcome::Damaged => Some(MiningOutcome::Damaged),
-                MiningOutcome::Destroyed => {
-                    self.remove_block(coords);
-                    Some(MiningOutcome::Destroyed)
-                }
-                MiningOutcome::Gained(mining_drop) => {
-                    self.remove_block(coords);
-                    Some(MiningOutcome::Gained(mining_drop))
-                }
-                MiningOutcome::Unbreakable => Some(MiningOutcome::Unbreakable),
-            },
+    pub fn mine_block(&mut self, coords: MapCoords, mining_power: u16) -> Option<MiningOutcome> {
+        let block = self.get_block(coords)?;
+        match block.mine(mining_power) {
+            MiningOutcome::Unbreakable => None,
+            MiningOutcome::Damaged => Some(MiningOutcome::Damaged),
+            MiningOutcome::Destroyed(drop) => {
+                self.remove_block(coords);
+                Some(MiningOutcome::Destroyed(drop))
+            }
         }
     }
 
@@ -98,7 +98,7 @@ impl GameMap {
         self.map[i].as_mut()
     }
 
-    fn add_block(&mut self, coords: MapCoords, kind: Block) {
+    fn add_block(&mut self, coords: MapCoords, kind: BlockType) {
         if self.is_block(coords) {
             return;
         }
@@ -107,7 +107,7 @@ impl GameMap {
         }
 
         let i = self.index_map(coords);
-        self.map[i] = Some(kind);
+        self.map[i] = Some(Block::new(kind));
     }
 
     fn remove_block(&mut self, coords: MapCoords) {
@@ -117,38 +117,5 @@ impl GameMap {
 
         let i = self.index_map(coords);
         self.map[i] = None;
-    }
-
-    fn temp(&mut self) {
-        for i in 0..self.width + 1 {
-            self.add_block(MapCoords::new(i, 0), Block::Wall);
-            self.add_block(MapCoords::new(i, self.height - 1), Block::Wall);
-        }
-        for i in 0..self.height + 1 {
-            self.add_block(MapCoords::new(0, i), Block::Wall);
-            self.add_block(MapCoords::new(self.width - 1, i), Block::Wall);
-        }
-        self.add_block(MapCoords::new(3, 3), Block::Rock { health: 9 });
-        self.add_block(MapCoords::new(2, 7), Block::Rock { health: 5 });
-        self.add_block(MapCoords::new(5, 4), Block::Rock { health: 2 });
-        self.add_block(
-            MapCoords::new(6, 6),
-            Block::Ore {
-                health: 3,
-                mining_drop: MiningDrop::Gold(5),
-            },
-        );
-        self.add_block(
-            MapCoords::new(8, 8),
-            Block::Chest {
-                mining_drop: MiningDrop::Item,
-            },
-        );
-        self.add_block(
-            MapCoords::new(2, 2),
-            Block::Crystal {
-                mining_drop: MiningDrop::Energy(10),
-            },
-        );
     }
 }
