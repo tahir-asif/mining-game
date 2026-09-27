@@ -3,7 +3,7 @@ mod constants;
 mod level;
 
 use crate::{
-    constants::{WINDOW_HEIGHT, WINDOW_WIDTH},
+    constants::{WINDOW_HEIGHT_INT, WINDOW_WIDTH_INT},
     level::Level,
 };
 
@@ -13,8 +13,8 @@ fn window_conf() -> Conf {
     Conf {
         window_title: "Puzzle Miner".to_owned(),
         fullscreen: false,
-        window_width: WINDOW_WIDTH,
-        window_height: WINDOW_HEIGHT,
+        window_width: WINDOW_WIDTH_INT,
+        window_height: WINDOW_HEIGHT_INT,
         window_resizable: false,
         ..Default::default()
     }
@@ -23,8 +23,8 @@ fn window_conf() -> Conf {
 #[macroquad::main(window_conf)]
 async fn main() {
     // declare "global" variables; settings
-    let mut debug_toggle = false;
-    let mut top_down_camera_toggle = false;
+    // let mut debug_toggle = false;
+    // let mut top_down_camera_toggle = false;
 
     let mut level = Level::new();
     level.init();
