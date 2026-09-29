@@ -1,8 +1,8 @@
-use crate::camera::CameraSettings;
-use crate::constants::{CAM_DISTANCE, GRID_SIZE};
-use crate::grid::GameMap;
-use crate::player::Player;
-use crate::point::Point;
+use crate::constants::GRID_SIZE;
+use crate::level::camera::Camera;
+use crate::level::coordinate::CameraCoords;
+use crate::level::map::GameMap;
+use crate::level::player::Player;
 
 use macroquad::prelude::*;
 use macroquad::ui::{hash, root_ui};
@@ -10,7 +10,7 @@ use macroquad::ui::{hash, root_ui};
 pub fn debug_controls(
     debug_toggle: &mut bool,
     game_map: &mut GameMap,
-    camera: &mut CameraSettings,
+    camera: &mut Camera,
     top_down_camera_toggle: &mut bool,
     player: &mut Player,
 ) {
@@ -19,14 +19,8 @@ pub fn debug_controls(
     }
 
     if is_key_pressed(KeyCode::P) {
-        // if toggling off top down mode, reset camera
         if *top_down_camera_toggle {
-            camera.pos = Point::new(
-                player.x.cast_signed() - CAM_DISTANCE,
-                CAM_DISTANCE,
-                player.z.cast_signed() - CAM_DISTANCE,
-            );
-            camera.up = Point::new(0, 1, 0);
+            camera.reset(player);
         }
         *top_down_camera_toggle = !*top_down_camera_toggle;
     }
@@ -38,7 +32,7 @@ pub fn debug_controls(
 
 fn debug(
     game_map: &mut GameMap,
-    cam: &mut CameraSettings,
+    cam: &mut Camera,
     top_down_camera_toggle: bool,
     player: &mut Player,
 ) {
@@ -56,41 +50,49 @@ fn scale(unsigned_int: usize) -> f32 {
 fn grid(game_map: &mut GameMap) {
     draw_line_3d(
         vec3(0.0, 0.0, 0.0),
-        vec3(scale(game_map.height - 1), 0.0, 0.0),
+        vec3(scale(game_map.get_height() - 1), 0.0, 0.0),
         RED,
     );
     draw_line_3d(
         vec3(0.0, 0.0, 0.0),
-        vec3(0.0, 0.0, scale(game_map.height - 1)),
+        vec3(0.0, 0.0, scale(game_map.get_height() - 1)),
         RED,
     );
     draw_line_3d(
-        vec3(scale(game_map.height - 1), 0.0, 0.0),
-        vec3(scale(game_map.width - 1), 0.0, scale(game_map.height - 1)),
+        vec3(scale(game_map.get_height() - 1), 0.0, 0.0),
+        vec3(
+            scale(game_map.get_width() - 1),
+            0.0,
+            scale(game_map.get_height() - 1),
+        ),
         RED,
     );
     draw_line_3d(
-        vec3(0.0, 0.0, scale(game_map.height - 1)),
-        vec3(scale(game_map.width - 1), 0.0, scale(game_map.height - 1)),
+        vec3(0.0, 0.0, scale(game_map.get_height() - 1)),
+        vec3(
+            scale(game_map.get_width() - 1),
+            0.0,
+            scale(game_map.get_height() - 1),
+        ),
         RED,
     );
-    for i in 1..game_map.width - 1 {
+    for i in 1..game_map.get_width() - 1 {
         draw_line_3d(
             vec3(scale(i), 0.0, 0.0),
-            vec3(scale(i), 0.0, scale(game_map.height - 1)),
+            vec3(scale(i), 0.0, scale(game_map.get_height() - 1)),
             BLUE,
         );
     }
-    for i in 1..game_map.height - 1 {
+    for i in 1..game_map.get_height() - 1 {
         draw_line_3d(
             vec3(0.0, 0.0, scale(i)),
-            vec3(scale(game_map.width - 1), 0.0, scale(i)),
+            vec3(scale(game_map.get_width() - 1), 0.0, scale(i)),
             BLUE,
         );
     }
 }
 
-fn window_overlay(cam: &mut CameraSettings, player: &mut Player) {
+fn window_overlay(cam: &mut Camera, player: &mut Player) {
     root_ui().window(hash!(), vec2(1.0, 1.0), vec2(150.0, 80.0), |ui| {
         // camera position
         ui.label(vec2(5.0, 1.0), "Camera Position");
@@ -108,15 +110,16 @@ fn window_overlay(cam: &mut CameraSettings, player: &mut Player) {
 
         // player position
         ui.label(vec2(5.0, 41.0), "Player Position");
-        ui.label(vec2(5.0, 51.0), &format!("({0}, {1})", player.x, player.z));
+        ui.label(vec2(5.0, 51.0), &player.get_coords().to_string());
     });
 }
 
-fn debug_camera(cam: &mut CameraSettings, player: &mut Player, top_down_camera_toggle: bool) {
+fn debug_camera(cam: &mut Camera, player: &mut Player, top_down_camera_toggle: bool) {
     if top_down_camera_toggle {
-        cam.pos = Point::new(player.x.cast_signed(), 10, player.z.cast_signed());
-        cam.up = Point::new(0, 0, 1);
-        cam.tar = Point::new(player.x.cast_signed(), 0, player.z.cast_signed());
+        cam.pos = CameraCoords::new(0, 10, 0);
+        cam.up = CameraCoords::new(0, 0, 1);
+        cam.tar = CameraCoords::new(0, 0, 0);
+        cam.point(player.get_coords());
         return;
     }
 

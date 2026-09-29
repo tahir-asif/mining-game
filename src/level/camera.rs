@@ -13,13 +13,20 @@ pub struct Camera {
 impl Camera {
     pub fn new(player: &mut Player) -> Self {
         let mut camera = Camera {
-            pos: CameraCoords::new(0, CAM_DISTANCE, 0),
-            up: CameraCoords::new(0, 1, 0),
+            pos: CameraCoords::new(0, 0, 0),
+            up: CameraCoords::new(0, 0, 0),
             tar: CameraCoords::new(0, 0, 0),
         };
 
-        camera.point(player.get_coords());
+        camera.reset(player);
         camera
+    }
+
+    pub fn reset(&mut self, player: &mut Player) {
+        self.pos = CameraCoords::new(0, CAM_DISTANCE, 0);
+        self.up = CameraCoords::new(0, 1, 0);
+        self.tar = CameraCoords::new(0, 0, 0);
+        self.point(player.get_coords());
     }
 
     pub fn point(&mut self, coords: MapCoords) {

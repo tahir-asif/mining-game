@@ -1,5 +1,4 @@
 mod constants;
-// mod debug;
 mod level;
 
 use crate::{
@@ -23,8 +22,8 @@ fn window_conf() -> Conf {
 #[macroquad::main(window_conf)]
 async fn main() {
     // declare "global" variables; settings
-    // let mut debug_toggle = false;
-    // let mut top_down_camera_toggle = false;
+    let mut debug_toggle = false;
+    let mut top_down_camera_toggle = false;
 
     let mut level = Level::new();
     level.init();
@@ -35,16 +34,8 @@ async fn main() {
             break; // end game
         }
 
-        level.game_loop();
+        level.game_loop(&mut debug_toggle, &mut top_down_camera_toggle);
         level.handle_input();
-
-        // debug::debug_controls(
-        //     &mut debug_toggle,
-        //     &mut game_map,
-        //     &mut camera,
-        //     &mut top_down_camera_toggle,
-        //     &mut player,
-        // );
 
         next_frame().await
     }

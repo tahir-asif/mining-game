@@ -1,3 +1,5 @@
+use std::fmt::{self, Display};
+
 pub struct CameraCoords {
     pub x: isize,
     pub y: isize,
@@ -16,6 +18,12 @@ pub struct MapCoords {
     pub z: usize,
 }
 
+impl Display for MapCoords {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({}, {})", self.x, self.z)
+    }
+}
+
 impl MapCoords {
     pub const fn new(x: usize, z: usize) -> Self {
         MapCoords { x, z }
@@ -27,11 +35,4 @@ impl MapCoords {
             z: self.z.saturating_add_signed(to.1),
         }
     }
-
-    // pub fn add(&mut self, to: (isize, isize)) -> (usize, usize) {
-    //     (
-    //         self.x.saturating_add_signed(to.0),
-    //         self.z.saturating_add_signed(to.1),
-    //     )
-    // }
 }

@@ -1,6 +1,7 @@
 mod block;
 mod camera;
 mod coordinate;
+mod debug;
 mod map;
 mod player;
 mod ui;
@@ -41,11 +42,22 @@ impl Level {
         self.game_map.generate_level();
     }
 
-    pub fn game_loop(&mut self) {
+    pub fn game_loop(&mut self, debug_toggle: &mut bool, top_down_camera_toggle: &mut bool) {
         self.camera.set();
         self.game_map.draw();
         self.player.draw();
         ui::draw_ui(&mut self.player);
+        self.debug(debug_toggle, top_down_camera_toggle);
+    }
+
+    fn debug(&mut self, debug_toggle: &mut bool, top_down_camera_toggle: &mut bool) {
+        debug::debug_controls(
+            debug_toggle,
+            &mut self.game_map,
+            &mut self.camera,
+            top_down_camera_toggle,
+            &mut self.player,
+        );
     }
 
     pub fn handle_input(&mut self) {
