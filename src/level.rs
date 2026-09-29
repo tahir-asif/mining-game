@@ -85,8 +85,8 @@ impl Level {
                 None => {}
                 Some(MiningOutcome::Unbreakable) => {}
                 Some(MiningOutcome::Damaged) => self.player.spend_energy(),
-                Some(MiningOutcome::Destroyed(drops)) => {
-                    self.player.spend_energy();
+                Some(MiningOutcome::Destroyed) => self.player.spend_energy(),
+                Some(MiningOutcome::Gained(drops)) => {
                     self.player.collect_drops(drops);
                 }
             }

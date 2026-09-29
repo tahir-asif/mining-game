@@ -52,9 +52,13 @@ impl GameMap {
         match block.mine(mining_power) {
             MiningOutcome::Unbreakable => None,
             MiningOutcome::Damaged => Some(MiningOutcome::Damaged),
-            MiningOutcome::Destroyed(drop) => {
+            MiningOutcome::Destroyed => {
                 self.remove_block(coords);
-                Some(MiningOutcome::Destroyed(drop))
+                Some(MiningOutcome::Destroyed)
+            }
+            MiningOutcome::Gained(drop) => {
+                self.remove_block(coords);
+                Some(MiningOutcome::Gained(drop))
             }
         }
     }

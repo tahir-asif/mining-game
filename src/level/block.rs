@@ -19,7 +19,8 @@ impl Drop {
 pub enum MiningOutcome {
     Unbreakable,
     Damaged,
-    Destroyed(&'static [Drop]),
+    Destroyed,
+    Gained(&'static [Drop]),
 }
 
 #[derive(Clone, Copy)]
@@ -77,13 +78,24 @@ impl Block {
     pub fn mine(&mut self, power: u16) -> MiningOutcome {
         match self.kind.category() {
             BlockCategory::Wall => MiningOutcome::Unbreakable,
-            BlockCategory::Crystal => MiningOutcome::Destroyed(self.kind.def().drops),
-            BlockCategory::Chest => MiningOutcome::Destroyed(self.kind.def().drops),
-            BlockCategory::Rock | BlockCategory::Ore => {
-                if let Some(h) = self.health.as_mut() {
-                    *h -= power;
-                    if *h == 0 {
-                        return MiningOutcome::Destroyed(self.kind.def().drops);
+            BlockCategory::Crystal => MiningOutcome::Gained(self.kind.def().drops),
+            BlockCategory::Chest => MiningOutcome::Gained(self.kind.def().drops),
+            BlockCategory::Rock => {
+                if let Some(hp) = self.health {
+                    let after = hp.saturating_sub(power);
+                    self.health = Some(after);
+                    if after == 0 {
+                        return MiningOutcome::Destroyed;
+                    }
+                }
+                MiningOutcome::Damaged
+            }
+            BlockCategory::Ore => {
+                if let Some(hp) = self.health {
+                    let after = hp.saturating_sub(power);
+                    self.health = Some(after);
+                    if after == 0 {
+                        return MiningOutcome::Gained(self.kind.def().drops);
                     }
                 }
                 MiningOutcome::Damaged
