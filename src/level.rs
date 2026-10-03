@@ -6,8 +6,11 @@ mod map;
 mod player;
 mod ui;
 
-use crate::level::{
-    block::MiningOutcome, camera::Camera, coordinate::MapCoords, map::GameMap, player::Player,
+use crate::{
+    common::GameState,
+    level::{
+        block::MiningOutcome, camera::Camera, coordinate::MapCoords, map::GameMap, player::Player,
+    },
 };
 
 use macroquad::prelude::*;
@@ -42,12 +45,18 @@ impl Level {
         self.game_map.generate_level();
     }
 
-    pub fn game_loop(&mut self, debug_toggle: &mut bool, top_down_camera_toggle: &mut bool) {
+    pub fn level_update(
+        &mut self,
+        debug_toggle: &mut bool,
+        top_down_camera_toggle: &mut bool,
+    ) -> GameState {
         self.camera.set();
         self.game_map.draw();
         self.player.draw();
         ui::draw_ui(&mut self.player);
         self.debug(debug_toggle, top_down_camera_toggle);
+        self.handle_input();
+        GameState::Level
     }
 
     fn debug(&mut self, debug_toggle: &mut bool, top_down_camera_toggle: &mut bool) {

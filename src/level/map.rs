@@ -30,7 +30,7 @@ impl GameMap {
     }
 
     pub fn draw(&self) {
-        clear_background(GRAY);
+        clear_background(BLANK);
 
         for x in 0..self.width {
             for z in 0..self.height {
