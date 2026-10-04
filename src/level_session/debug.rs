@@ -1,8 +1,8 @@
 use crate::constants::GRID_SIZE;
-use crate::level::camera::Camera;
-use crate::level::coordinate::CameraCoords;
-use crate::level::map::GameMap;
-use crate::level::player::Player;
+use crate::level_session::camera::Camera;
+use crate::level_session::coordinate::CameraCoords;
+use crate::level_session::map::GameMap;
+use crate::level_session::player::Player;
 
 use macroquad::prelude::*;
 use macroquad::ui::{hash, root_ui};

@@ -8,7 +8,7 @@ mod ui;
 
 use crate::{
     common::GameState,
-    level::{
+    level_session::{
         block::MiningOutcome, camera::Camera, coordinate::MapCoords, map::GameMap, player::Player,
     },
 };

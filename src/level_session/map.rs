@@ -1,6 +1,6 @@
 use crate::constants::*;
-use crate::level::block::{Block, BlockType, MiningOutcome};
-use crate::level::coordinate::MapCoords;
+use crate::level_session::block::{Block, BlockType, MiningOutcome};
+use crate::level_session::coordinate::MapCoords;
 
 use macroquad::prelude::*;
 
