@@ -1,6 +1,6 @@
 use crate::constants::{CAM_DISTANCE, GRID_SIZE};
-use crate::level_session::coordinate::{CameraCoords, MapCoords};
-use crate::level_session::player::Player;
+use crate::level::coordinate::{CameraCoords, MapCoords};
+use crate::level::player::Player;
 
 use macroquad::prelude::*;
 

@@ -1,6 +1,6 @@
 use crate::constants::GRID_SIZE;
-use crate::level_session::block::{Drop, DropKind};
-use crate::level_session::coordinate::MapCoords;
+use crate::level::block::{Drop, DropKind};
+use crate::level::coordinate::MapCoords;
 
 use macroquad::prelude::*;
 

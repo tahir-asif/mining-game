@@ -1,6 +1,6 @@
-use crate::level_session::coordinate::MapCoords;
+use crate::level::MapCoords;
 
-pub struct LevelDef {
+pub struct LevelData {
     pub id: LevelId,
     pub spawn: MapCoords,
     pub goal: Goal,

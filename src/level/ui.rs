@@ -1,5 +1,5 @@
 use crate::constants::WINDOW_WIDTH_FLOAT;
-use crate::level_session::player::Player;
+use crate::level::player::Player;
 
 use macroquad::prelude::*;
 use macroquad::ui::root_ui;

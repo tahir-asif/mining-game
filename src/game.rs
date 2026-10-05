@@ -1,6 +1,5 @@
 use crate::{
-    level_session::{LevelSession, outcome::Outcome},
-    levels::LevelId,
+    level::{Level, levels::LevelId, outcome::Outcome},
     main_menu::LoadSaveState,
     save::{Equipment, Profile, STARTING_BACKPACK, STARTING_HAT, STARTING_PICK},
 };
@@ -10,7 +9,7 @@ pub enum GameState {
     Settings,
     LoadSave(LoadSaveState),
     Hub,
-    Level(Box<LevelSession>),
+    Level(Box<Level>),
 }
 
 pub enum TransitionState {
@@ -34,6 +33,7 @@ impl Game {
         }
     }
 
+    // State
     pub fn get_state(&mut self) -> &mut GameState {
         &mut self.state
     }
@@ -48,6 +48,7 @@ impl Game {
         }
     }
 
+    // Profile
     pub fn get_profile(&mut self) -> &mut Profile {
         self.profile.as_mut().expect("Profile does not exist.")
     }
@@ -73,12 +74,13 @@ impl Game {
         })
     }
 
+    // Level transition helper functions
     fn start_level(&mut self, id: LevelId) {
         let p = self.get_profile();
         let starting_energy = p.starting_energy();
         let starting_tech = p.starting_tech();
         let mining_power = p.get_mining_power();
-        let level = LevelSession::new(id, starting_energy, starting_tech, mining_power);
+        let level = Level::new(id, starting_energy, starting_tech, mining_power);
         self.state = GameState::Level(Box::new(level));
     }
 

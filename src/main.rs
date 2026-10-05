@@ -2,8 +2,7 @@ mod constants;
 mod game;
 mod hub;
 mod items;
-mod level_session;
-mod levels;
+mod level;
 mod main_menu;
 mod save;
 

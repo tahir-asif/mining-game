@@ -2,6 +2,7 @@ mod block;
 mod camera;
 pub mod coordinate;
 mod debug;
+pub mod levels;
 mod map;
 pub mod outcome;
 mod player;
@@ -10,11 +11,16 @@ pub mod winnings;
 
 use crate::{
     game::TransitionState,
-    level_session::{
-        block::MiningOutcome, camera::Camera, coordinate::MapCoords, map::GameMap,
-        outcome::Outcome, player::Player, winnings::Winnings,
+    level::{
+        block::MiningOutcome,
+        camera::Camera,
+        coordinate::MapCoords,
+        levels::{Goal, LevelData, LevelId},
+        map::GameMap,
+        outcome::Outcome,
+        player::Player,
+        winnings::Winnings,
     },
-    levels::{Goal, LevelDef, LevelId},
 };
 
 use macroquad::prelude::*;
@@ -26,16 +32,16 @@ enum Direction {
     Down,
 }
 
-pub struct LevelSession {
+pub struct Level {
     player: Player,
     camera: Camera,
     game_map: GameMap,
-    meta_data: LevelDef,
+    meta_data: LevelData,
 }
 
-impl LevelSession {
+impl Level {
     pub fn new(id: LevelId, starting_energy: u16, starting_tech: u16, mining_power: u16) -> Self {
-        let meta_data = LevelDef {
+        let meta_data = LevelData {
             id,
             spawn: MapCoords::new(1, 1),
             goal: Goal::Collect(MapCoords::new(9, 9)),
@@ -52,7 +58,7 @@ impl LevelSession {
 
         game_map.generate_level();
 
-        LevelSession {
+        Level {
             player,
             camera,
             game_map,
