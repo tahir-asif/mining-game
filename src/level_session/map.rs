@@ -26,6 +26,7 @@ impl GameMap {
         self.add_block(MapCoords::new(6, 6), BlockType::Wall1);
         self.add_block(MapCoords::new(4, 7), BlockType::Ore1);
         self.add_block(MapCoords::new(8, 2), BlockType::Crystal1);
+        self.add_block(MapCoords::new(7, 4), BlockType::Chest1);
         self.add_block(MapCoords::new(9, 9), BlockType::Chest1);
     }
 

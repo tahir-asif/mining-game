@@ -12,7 +12,7 @@ impl CameraCoords {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub struct MapCoords {
     pub x: usize,
     pub z: usize,

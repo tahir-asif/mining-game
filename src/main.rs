@@ -1,5 +1,5 @@
-mod common;
 mod constants;
+mod game;
 mod hub;
 mod items;
 mod level_session;
@@ -8,10 +8,9 @@ mod main_menu;
 mod save;
 
 use crate::{
-    common::GameState,
     constants::{WINDOW_HEIGHT_INT, WINDOW_WIDTH_INT},
+    game::{Game, GameState, TransitionState},
     hub::hub_update,
-    level_session::Level,
     main_menu::{load_save_update, main_menu_update, settings_update},
 };
 
@@ -33,12 +32,7 @@ async fn main() {
     // declare "global" variables; settings
     let mut debug_toggle = false;
     let mut top_down_camera_toggle = false;
-
-    let mut level = Level::new();
-    level.init();
-
-    let mut game_state = GameState::MainMenu;
-    game_state = GameState::Level; // skip straight to level for dev
+    let mut game = Game::new();
 
     // main game loop
     loop {
@@ -46,13 +40,15 @@ async fn main() {
             break; // end game
         }
 
-        game_state = match game_state {
+        let transition_state: TransitionState = match game.get_state() {
             GameState::MainMenu => main_menu_update(),
             GameState::Settings => settings_update(),
-            GameState::LoadSaves => load_save_update(),
-            GameState::Hub => hub_update(),
-            GameState::Level => level.level_update(&mut debug_toggle, &mut top_down_camera_toggle),
+            GameState::LoadSave(state) => load_save_update(state),
+            GameState::Hub => hub_update(game.get_profile()),
+            GameState::Level(level) => level.update(&mut debug_toggle, &mut top_down_camera_toggle),
         };
+
+        game.set_state(transition_state);
 
         next_frame().await
     }

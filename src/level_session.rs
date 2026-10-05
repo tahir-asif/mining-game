@@ -1,62 +1,106 @@
 mod block;
 mod camera;
-mod coordinate;
+pub mod coordinate;
 mod debug;
 mod map;
 mod player;
 mod ui;
 
 use crate::{
-    common::GameState,
+    game::TransitionState,
     level_session::{
         block::MiningOutcome, camera::Camera, coordinate::MapCoords, map::GameMap, player::Player,
     },
+    levels::{Goal, LevelDef, LevelId},
 };
 
 use macroquad::prelude::*;
 
-pub enum Direction {
+enum Direction {
     Left,
     Right,
     Up,
     Down,
 }
 
-pub struct Level {
+pub struct Winnings {
+    pub gold: u16,
+}
+
+pub enum Outcome {
+    Win(Winnings),
+    Lose,
+    Exit,
+}
+
+pub struct LevelSession {
     player: Player,
     camera: Camera,
     game_map: GameMap,
+    meta_data: LevelDef,
 }
 
-impl Level {
-    pub fn new() -> Self {
-        let mut player = Player::new();
+impl LevelSession {
+    pub fn new(id: LevelId, starting_energy: u16, starting_tech: u16, mining_power: u16) -> Self {
+        let meta_data = LevelDef {
+            id,
+            spawn: MapCoords::new(1, 1),
+            goal: Goal::Collect(MapCoords::new(9, 9)),
+            prerequisies: &[],
+        };
+        let mut game_map = GameMap::new(10, 10);
+        let mut player = Player::new(
+            meta_data.spawn,
+            starting_energy,
+            starting_tech,
+            mining_power,
+        );
         let camera = Camera::new(&mut player);
-        let game_map = GameMap::new(10, 10);
 
-        Level {
+        game_map.generate_level();
+
+        LevelSession {
             player,
             camera,
             game_map,
+            meta_data,
         }
     }
 
-    pub fn init(&mut self) {
-        self.game_map.generate_level();
+    fn calc_winnings(&self) -> Winnings {
+        Winnings {
+            gold: self.player.collected_gold,
+        }
     }
 
-    pub fn level_update(
+    pub fn update(
         &mut self,
         debug_toggle: &mut bool,
         top_down_camera_toggle: &mut bool,
-    ) -> GameState {
+    ) -> TransitionState {
         self.camera.set();
         self.game_map.draw();
         self.player.draw();
         ui::draw_ui(&mut self.player);
         self.debug(debug_toggle, top_down_camera_toggle);
         self.handle_input();
-        GameState::Level
+        if self.is_goal_achieved() {
+            return TransitionState::EndLevel(Outcome::Win(self.calc_winnings()));
+        }
+        if self.player.energy == 0 {
+            return TransitionState::EndLevel(Outcome::Lose);
+        }
+        if get_last_key_pressed() == Some(KeyCode::Escape) {
+            return TransitionState::EndLevel(Outcome::Exit);
+        }
+        TransitionState::None
+    }
+
+    fn is_goal_achieved(&self) -> bool {
+        match self.meta_data.goal {
+            Goal::Collect(coords) => self.player.get_coords() == coords,
+            Goal::MineAllGold => false,
+        }
     }
 
     fn debug(&mut self, debug_toggle: &mut bool, top_down_camera_toggle: &mut bool) {
@@ -69,7 +113,7 @@ impl Level {
         );
     }
 
-    pub fn handle_input(&mut self) {
+    fn handle_input(&mut self) {
         let shift_held: bool = is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift);
         match get_last_key_pressed() {
             None => {}
@@ -83,7 +127,7 @@ impl Level {
         }
     }
 
-    pub fn move_player(&mut self, direction: Direction, do_mine: bool) {
+    fn move_player(&mut self, direction: Direction, do_mine: bool) {
         let (dx, dz): (isize, isize) = match direction {
             Direction::Left => (1, 0),
             Direction::Right => (-1, 0),
@@ -101,7 +145,7 @@ impl Level {
         let move_to = move_to; // remove mutability
 
         if do_mine {
-            let was_mine_successful = self.game_map.mine_block(move_to, 1);
+            let was_mine_successful = self.game_map.mine_block(move_to, self.player.mining_power);
             match was_mine_successful {
                 None => {}
                 Some(MiningOutcome::Unbreakable) => {}

@@ -7,15 +7,19 @@ use macroquad::prelude::*;
 pub struct Player {
     coords: MapCoords,
     pub energy: u16,
-    pub gold: u16,
+    pub tech: u16,
+    pub mining_power: u16,
+    pub collected_gold: u16,
 }
 
 impl Player {
-    pub const fn new() -> Self {
+    pub const fn new(spawn: MapCoords, energy: u16, tech: u16, mining_power: u16) -> Self {
         Player {
-            coords: MapCoords { x: 1, z: 1 },
-            energy: 100,
-            gold: 20,
+            coords: spawn,
+            energy,
+            tech,
+            mining_power,
+            collected_gold: 0,
         }
     }
 
@@ -38,7 +42,7 @@ impl Player {
                     self.energy += drop.amount;
                 }
                 DropKind::Gold => {
-                    self.gold += drop.amount;
+                    self.collected_gold += drop.amount;
                 }
             }
         }

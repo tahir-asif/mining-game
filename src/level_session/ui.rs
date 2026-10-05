@@ -11,6 +11,6 @@ pub fn draw_ui(player: &mut Player) {
     );
     root_ui().label(
         vec2(WINDOW_WIDTH_FLOAT - 100.0, 10.0),
-        &format!("GOLD: {0}", player.gold),
+        &format!("GOLD: {0}", player.collected_gold),
     );
 }
