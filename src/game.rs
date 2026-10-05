@@ -1,9 +1,25 @@
 use crate::{
-    level_session::{LevelSession, Outcome},
+    level_session::{LevelSession, outcome::Outcome},
     levels::LevelId,
     main_menu::LoadSaveState,
     save::{Equipment, Profile, STARTING_BACKPACK, STARTING_HAT, STARTING_PICK},
 };
+
+pub enum GameState {
+    MainMenu,
+    Settings,
+    LoadSave(LoadSaveState),
+    Hub,
+    Level(Box<LevelSession>),
+}
+
+pub enum TransitionState {
+    None,
+    GoTo(GameState),
+    LoadProfile { slot: usize, name: String },
+    StartLevel(LevelId),
+    EndLevel(Outcome),
+}
 
 pub struct Game {
     profile: Option<Profile>,
@@ -74,20 +90,4 @@ impl Game {
         }
         self.state = GameState::Hub;
     }
-}
-
-pub enum GameState {
-    MainMenu,
-    Settings,
-    LoadSave(LoadSaveState),
-    Hub,
-    Level(Box<LevelSession>),
-}
-
-pub enum TransitionState {
-    None,
-    GoTo(GameState),
-    LoadProfile { slot: usize, name: String },
-    StartLevel(LevelId),
-    EndLevel(Outcome),
 }

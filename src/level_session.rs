@@ -3,13 +3,16 @@ mod camera;
 pub mod coordinate;
 mod debug;
 mod map;
+pub mod outcome;
 mod player;
 mod ui;
+pub mod winnings;
 
 use crate::{
     game::TransitionState,
     level_session::{
-        block::MiningOutcome, camera::Camera, coordinate::MapCoords, map::GameMap, player::Player,
+        block::MiningOutcome, camera::Camera, coordinate::MapCoords, map::GameMap,
+        outcome::Outcome, player::Player, winnings::Winnings,
     },
     levels::{Goal, LevelDef, LevelId},
 };
@@ -21,16 +24,6 @@ enum Direction {
     Right,
     Up,
     Down,
-}
-
-pub struct Winnings {
-    pub gold: u16,
-}
-
-pub enum Outcome {
-    Win(Winnings),
-    Lose,
-    Exit,
 }
 
 pub struct LevelSession {
@@ -67,12 +60,6 @@ impl LevelSession {
         }
     }
 
-    fn calc_winnings(&self) -> Winnings {
-        Winnings {
-            gold: self.player.collected_gold,
-        }
-    }
-
     pub fn update(
         &mut self,
         debug_toggle: &mut bool,
@@ -100,6 +87,12 @@ impl LevelSession {
         match self.meta_data.goal {
             Goal::Collect(coords) => self.player.get_coords() == coords,
             Goal::MineAllGold => false,
+        }
+    }
+
+    fn calc_winnings(&self) -> Winnings {
+        Winnings {
+            gold: self.player.collected_gold,
         }
     }
 

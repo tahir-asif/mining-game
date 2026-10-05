@@ -1,6 +1,6 @@
 use crate::{
     items::{Backpack, Hat, ItemId, Pickaxe},
-    level_session::Winnings,
+    level_session::winnings::Winnings,
 };
 
 pub struct Equipment {
