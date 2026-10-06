@@ -1,4 +1,4 @@
-use crate::{game::TransitionState, save::Profile};
+use crate::{game::TransitionState, level::levels::LEVELS, save::Profile};
 use macroquad::{color::*, ui::root_ui, window::clear_background};
 
 pub fn hub_update(profile: &mut Profile) -> TransitionState {
@@ -18,11 +18,12 @@ pub fn hub_update(profile: &mut Profile) -> TransitionState {
         root_ui().label(None, &label);
     }
 
-    if root_ui().button(None, "Level 1") {
-        return TransitionState::StartLevel(1);
+    for level in LEVELS {
+        let label = format!("Level {}", level.id + 1);
+        if root_ui().button(None, label.as_str()) {
+            return TransitionState::StartLevel(level.id);
+        }
     }
-    if root_ui().button(None, "Level 2") {
-        return TransitionState::StartLevel(2);
-    }
+
     TransitionState::None
 }

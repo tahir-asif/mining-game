@@ -15,7 +15,7 @@ use crate::{
         block::MiningOutcome,
         camera::Camera,
         coordinate::MapCoords,
-        levels::{Goal, LevelData, LevelId},
+        levels::{Goal, LevelData, LevelId, level_data},
         map::GameMap,
         outcome::Outcome,
         player::Player,
@@ -36,18 +36,13 @@ pub struct Level {
     player: Player,
     camera: Camera,
     game_map: GameMap,
-    meta_data: LevelData,
+    meta_data: &'static LevelData,
 }
 
 impl Level {
     pub fn new(id: LevelId, starting_energy: u16, starting_tech: u16, mining_power: u16) -> Self {
-        let meta_data = LevelData {
-            id,
-            spawn: MapCoords::new(1, 1),
-            goal: Goal::Collect(MapCoords::new(9, 9)),
-            prerequisies: &[],
-        };
-        let mut game_map = GameMap::new(10, 10);
+        let meta_data = level_data(id).unwrap_or_else(|| panic!("Level ID {id} does not exist"));
+        let mut game_map = GameMap::new(meta_data.width, meta_data.height);
         let mut player = Player::new(
             meta_data.spawn,
             starting_energy,
@@ -56,7 +51,7 @@ impl Level {
         );
         let camera = Camera::new(&mut player);
 
-        game_map.generate_level();
+        game_map.generate_level(meta_data.block_ids);
 
         Level {
             player,
@@ -127,7 +122,7 @@ impl Level {
     }
 
     fn move_player(&mut self, direction: Direction, do_mine: bool) {
-        let (dx, dz): (isize, isize) = match direction {
+        let (dx, dz): (i8, i8) = match direction {
             Direction::Left => (1, 0),
             Direction::Right => (-1, 0),
             Direction::Up => (0, 1),
@@ -135,10 +130,10 @@ impl Level {
         };
         let mut move_to: MapCoords = self.player.get_coords().add((dx, dz));
         // if trying to move out of bounds, undo that movement
-        if move_to.x > self.game_map.get_width() {
+        if move_to.x > u8::try_from(self.game_map.get_width()).expect("map width > u8") {
             move_to.x -= 1
         }
-        if move_to.z > self.game_map.get_height() {
+        if move_to.z > u8::try_from(self.game_map.get_height()).expect("map height > u8") {
             move_to.z -= 1
         }
         let move_to = move_to; // remove mutability

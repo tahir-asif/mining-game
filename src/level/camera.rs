@@ -30,16 +30,10 @@ impl Camera {
     }
 
     pub fn point(&mut self, coords: MapCoords) {
-        self.pos.x = (-CAM_DISTANCE).saturating_add_unsigned(coords.x);
-        self.pos.z = (-CAM_DISTANCE).saturating_add_unsigned(coords.z);
-        self.tar.x = match isize::try_from(coords.x) {
-            Ok(x) => x,
-            Err(_) => isize::MAX,
-        };
-        self.tar.z = match isize::try_from(coords.z) {
-            Ok(z) => z,
-            Err(_) => isize::MAX,
-        };
+        self.pos.x = (-CAM_DISTANCE).saturating_add_unsigned(usize::from(coords.x));
+        self.pos.z = (-CAM_DISTANCE).saturating_add_unsigned(usize::from(coords.z));
+        self.tar.x = isize::from(coords.x);
+        self.tar.z = isize::from(coords.z);
     }
 
     pub fn set(&mut self) {

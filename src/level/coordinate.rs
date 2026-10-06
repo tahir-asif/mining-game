@@ -14,8 +14,8 @@ impl CameraCoords {
 
 #[derive(Copy, Clone, PartialEq)]
 pub struct MapCoords {
-    pub x: usize,
-    pub z: usize,
+    pub x: u8,
+    pub z: u8,
 }
 
 impl Display for MapCoords {
@@ -25,11 +25,11 @@ impl Display for MapCoords {
 }
 
 impl MapCoords {
-    pub const fn new(x: usize, z: usize) -> Self {
+    pub const fn new(x: u8, z: u8) -> Self {
         MapCoords { x, z }
     }
 
-    pub fn add(&mut self, to: (isize, isize)) -> Self {
+    pub fn add(&mut self, to: (i8, i8)) -> Self {
         MapCoords {
             x: self.x.saturating_add_signed(to.0),
             z: self.z.saturating_add_signed(to.1),
