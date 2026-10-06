@@ -1,8 +1,16 @@
-use crate::{game::TransitionState, level::levels::LEVELS, save::Profile};
+use crate::{
+    game::{GameState, TransitionState},
+    level::levels::LEVELS,
+    save::Profile,
+};
 use macroquad::{color::*, ui::root_ui, window::clear_background};
 
 pub fn hub_update(profile: &mut Profile) -> TransitionState {
     clear_background(VIOLET);
+
+    if root_ui().button(None, "< Main Menu") {
+        return TransitionState::GoTo(GameState::MainMenu);
+    }
 
     let label = format!("Gold: {}", profile.gold);
     root_ui().label(None, &label);
