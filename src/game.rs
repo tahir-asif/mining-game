@@ -10,6 +10,7 @@ pub enum GameState {
     LoadSave(LoadSaveState),
     Hub,
     Level(Box<Level>),
+    Quit,
 }
 
 pub enum TransitionState {
@@ -18,6 +19,7 @@ pub enum TransitionState {
     LoadProfile { slot: usize, name: String },
     StartLevel(LevelId),
     EndLevel(Outcome),
+    Quit,
 }
 
 pub struct Game {
@@ -45,6 +47,7 @@ impl Game {
             TransitionState::LoadProfile { slot: s, name: n } => self.load_profile(s, n),
             TransitionState::StartLevel(id) => self.start_level(id),
             TransitionState::EndLevel(result) => self.end_level(result),
+            TransitionState::Quit => self.state = GameState::Quit,
         }
     }
 

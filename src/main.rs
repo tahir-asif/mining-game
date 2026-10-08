@@ -32,11 +32,12 @@ async fn main() {
     let mut debug_toggle = false;
     let mut top_down_camera_toggle = false;
     let mut game = Game::new();
+    let mut is_quit = false;
 
     // main game loop
     loop {
         if is_key_down(KeyCode::LeftSuper) & is_key_pressed(KeyCode::W) {
-            break; // end game
+            is_quit = true;
         }
 
         let transition_state: TransitionState = match game.get_state() {
@@ -45,10 +46,17 @@ async fn main() {
             GameState::LoadSave(state) => load_save_update(state),
             GameState::Hub => hub_update(game.get_profile()),
             GameState::Level(level) => level.update(&mut debug_toggle, &mut top_down_camera_toggle),
+            GameState::Quit => {
+                is_quit = true;
+                TransitionState::None
+            }
         };
 
         game.set_state(transition_state);
 
+        if is_quit {
+            break;
+        }
         next_frame().await
     }
 }
