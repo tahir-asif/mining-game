@@ -15,13 +15,12 @@ pub fn hub_update(profile: &mut Profile) -> TransitionState {
 
         egui::SidePanel::left("SideBar")
             .frame(frame)
+            .resizable(false)
             .show(egui_ctx, |ui| {
                 ui.vertical(|ui| {
                     if ui.button("Main Menu").clicked() {
                         transition = TransitionState::GoTo(GameState::MainMenu);
                     }
-
-                    ui.label("Inventory");
 
                     let label = format!("Gold: {}", profile.gold);
                     ui.label(&label);
@@ -34,7 +33,7 @@ pub fn hub_update(profile: &mut Profile) -> TransitionState {
                     );
                     ui.label(&label);
 
-                    ui.label("Items:");
+                    ui.label("Inventory:");
                     for item in &profile.items {
                         ui.label(format!("{item}"));
                     }
@@ -42,6 +41,7 @@ pub fn hub_update(profile: &mut Profile) -> TransitionState {
             });
         egui::SidePanel::right("Levels")
             .frame(frame)
+            .resizable(false)
             .show(egui_ctx, |ui| {
                 for level in LEVELS {
                     let label = format!("Level {}", level.id + 1);

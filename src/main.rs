@@ -5,12 +5,14 @@ mod items;
 mod level;
 mod main_menu;
 mod save;
+mod styles;
 
 use crate::{
     constants::{WINDOW_HEIGHT_INT, WINDOW_WIDTH_INT},
     game::{Game, GameState, TransitionState},
     hub::hub_update,
     main_menu::{load_save_update, main_menu_update, settings_update},
+    styles::{setup_custom_fonts, setup_global_style},
 };
 
 use macroquad::prelude::*;
@@ -33,6 +35,12 @@ async fn main() {
     let mut top_down_camera_toggle = false;
     let mut game = Game::new();
     let mut is_quit = false;
+
+    // ui setup
+    egui_macroquad::cfg(|ctx| {
+        setup_global_style(ctx);
+        setup_custom_fonts(ctx);
+    });
 
     // main game loop
     loop {
@@ -57,6 +65,7 @@ async fn main() {
         if is_quit {
             break;
         }
+
         egui_macroquad::draw();
         next_frame().await
     }

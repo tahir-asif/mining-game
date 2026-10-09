@@ -23,7 +23,7 @@ pub enum Goal {
 pub type LevelId = u8;
 pub type BlockId = u8;
 
-/*  Coordinates with respect to block_ids:
+/*  Coordinates system with respect to block_ids:
  *  0,0  1,0  2,0  3,0
  *  0,1  1,1
  *  0,2
