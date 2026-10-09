@@ -1,16 +1,14 @@
-use crate::constants::WINDOW_WIDTH_FLOAT;
 use crate::level::player::Player;
 
-use macroquad::prelude::*;
-use macroquad::ui::root_ui;
+use egui_macroquad::egui::{self, Align2};
 
 pub fn draw_ui(player: &mut Player) {
-    root_ui().label(
-        vec2(WINDOW_WIDTH_FLOAT - 100.0, 30.0),
-        &format!("ENERGY: {0}", player.energy),
-    );
-    root_ui().label(
-        vec2(WINDOW_WIDTH_FLOAT - 100.0, 10.0),
-        &format!("GOLD: {0}", player.collected_gold),
-    );
+    egui_macroquad::ui(|ctx| {
+        egui::Area::new("HUD_stats".into())
+            .anchor(Align2::LEFT_TOP, egui::vec2(-10.0, 10.0))
+            .show(ctx, |ui| {
+                ui.label(format!("ENERGY: {}", player.energy));
+                ui.label(format!("GOLD: {}", player.collected_gold))
+            });
+    });
 }

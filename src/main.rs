@@ -57,6 +57,7 @@ async fn main() {
         if is_quit {
             break;
         }
+        egui_macroquad::draw();
         next_frame().await
     }
 }

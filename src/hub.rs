@@ -3,35 +3,54 @@ use crate::{
     level::levels::LEVELS,
     save::Profile,
 };
-use macroquad::{color::*, ui::root_ui, window::clear_background};
+use egui_macroquad::egui;
+use macroquad::{color::*, window::clear_background};
 
 pub fn hub_update(profile: &mut Profile) -> TransitionState {
+    let mut transition = TransitionState::None;
     clear_background(VIOLET);
 
-    if root_ui().button(None, "< Main Menu") {
-        return TransitionState::GoTo(GameState::MainMenu);
-    }
+    egui_macroquad::ui(|egui_ctx| {
+        let frame = egui::Frame::new().fill(egui::Color32::TRANSPARENT);
 
-    let label = format!("Gold: {}", profile.gold);
-    root_ui().label(None, &label);
-    let label = format!(
-        "Equipped: {}, {}, {}",
-        profile.equipped.pickaxe.name, profile.equipped.backpack.name, profile.equipped.hat.name
-    );
-    root_ui().label(None, &label);
+        egui::SidePanel::left("SideBar")
+            .frame(frame)
+            .show(egui_ctx, |ui| {
+                ui.vertical(|ui| {
+                    if ui.button("Main Menu").clicked() {
+                        transition = TransitionState::GoTo(GameState::MainMenu);
+                    }
 
-    root_ui().label(None, "Items:");
-    for item in &profile.items {
-        let label = format!("{item}");
-        root_ui().label(None, &label);
-    }
+                    ui.label("Inventory");
 
-    for level in LEVELS {
-        let label = format!("Level {}", level.id + 1);
-        if root_ui().button(None, label.as_str()) {
-            return TransitionState::StartLevel(level.id);
-        }
-    }
+                    let label = format!("Gold: {}", profile.gold);
+                    ui.label(&label);
 
-    TransitionState::None
+                    let label = format!(
+                        "Equipped: {}, {}, {}",
+                        profile.equipped.pickaxe.name,
+                        profile.equipped.backpack.name,
+                        profile.equipped.hat.name
+                    );
+                    ui.label(&label);
+
+                    ui.label("Items:");
+                    for item in &profile.items {
+                        ui.label(format!("{item}"));
+                    }
+                });
+            });
+        egui::SidePanel::right("Levels")
+            .frame(frame)
+            .show(egui_ctx, |ui| {
+                for level in LEVELS {
+                    let label = format!("Level {}", level.id + 1);
+                    if ui.button(&label).clicked() {
+                        transition = TransitionState::StartLevel(level.id);
+                    }
+                }
+            });
+    });
+
+    transition
 }

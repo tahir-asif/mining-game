@@ -2,29 +2,57 @@ use crate::{
     constants::SAVE_SLOT_COUNT,
     game::{GameState, TransitionState},
 };
-use macroquad::{
-    color::*,
-    ui::{hash, root_ui},
-    window::clear_background,
-};
+use egui_macroquad::egui;
+use macroquad::{color::*, window::clear_background};
 
 pub fn main_menu_update() -> TransitionState {
+    let mut transition = TransitionState::None;
     clear_background(MAROON);
-    if root_ui().button(None, "Play") {
-        return TransitionState::GoTo(GameState::LoadSave(LoadSaveState::new()));
-    }
-    if root_ui().button(None, "Settings") {
-        return TransitionState::GoTo(GameState::Settings);
-    }
-    TransitionState::None
+
+    egui_macroquad::ui(|egui_ctx| {
+        let frame = egui::Frame::new().fill(egui::Color32::TRANSPARENT);
+
+        egui::CentralPanel::default()
+            .frame(frame)
+            .show(egui_ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.label("Puzzle Miner");
+                    if ui.button("Play").clicked() {
+                        transition =
+                            TransitionState::GoTo(GameState::LoadSave(LoadSaveState::new()));
+                    }
+                    if ui.button("Settings").clicked() {
+                        transition = TransitionState::GoTo(GameState::Settings);
+                    }
+                    if ui.button("Quit").clicked() {
+                        transition = TransitionState::Quit;
+                    }
+                });
+            });
+    });
+
+    transition
 }
 
 pub fn settings_update() -> TransitionState {
+    let mut transition = TransitionState::None;
     clear_background(BROWN);
-    if root_ui().button(None, "< Main Menu") {
-        return TransitionState::GoTo(GameState::MainMenu);
-    }
-    TransitionState::None
+
+    egui_macroquad::ui(|egui_ctx| {
+        let frame = egui::Frame::new().fill(egui::Color32::TRANSPARENT);
+
+        egui::CentralPanel::default()
+            .frame(frame)
+            .show(egui_ctx, |ui| {
+                ui.vertical(|ui| {
+                    if ui.button("Main Menu").clicked() {
+                        transition = TransitionState::GoTo(GameState::MainMenu);
+                    }
+                });
+            });
+    });
+
+    transition
 }
 
 pub struct SlotInput {
@@ -47,22 +75,34 @@ impl LoadSaveState {
 }
 
 pub fn load_save_update(state: &mut LoadSaveState) -> TransitionState {
+    let mut transition = TransitionState::None;
     clear_background(BEIGE);
 
-    for (i, slot) in state.slots.iter_mut().enumerate() {
-        root_ui().label(None, &format!("Slot {}", i + 1));
-        root_ui().input_text(hash!("slot_name", i + 1), "Name", &mut slot.name);
-        if root_ui().button(None, "Save") && !slot.name.trim().is_empty() {
-            return TransitionState::LoadProfile {
-                slot: i + 1,
-                name: slot.name.clone(),
-            };
-        }
-    }
+    egui_macroquad::ui(|egui_ctx| {
+        let frame = egui::Frame::new().fill(egui::Color32::TRANSPARENT);
 
-    if root_ui().button(None, "< Main Menu") {
-        return TransitionState::GoTo(GameState::MainMenu);
-    }
+        egui::CentralPanel::default()
+            .frame(frame)
+            .show(egui_ctx, |ui| {
+                ui.vertical(|ui| {
+                    if ui.button("Main Menu").clicked() {
+                        transition = TransitionState::GoTo(GameState::MainMenu);
+                    }
+                    for (i, slot) in state.slots.iter_mut().enumerate() {
+                        ui.horizontal(|ui| {
+                            ui.label(format!("Slot {i}"));
+                            ui.text_edit_singleline(&mut slot.name);
+                            if ui.button("Save?").clicked() && !slot.name.trim().is_empty() {
+                                transition = TransitionState::LoadProfile {
+                                    slot: i + 1,
+                                    name: slot.name.clone(),
+                                };
+                            };
+                        });
+                    }
+                });
+            });
+    });
 
-    TransitionState::None
+    transition
 }
