@@ -3,7 +3,7 @@ use crate::{
     level::winnings::Winnings,
 };
 
-pub struct Equipment {
+pub struct Equipped {
     pub pickaxe: &'static Pickaxe,
     pub hat: &'static Hat,
     pub backpack: &'static Backpack,
@@ -14,7 +14,7 @@ pub struct Profile {
     pub slot: usize,
     pub gold: u16,
     pub items: Vec<ItemId>,
-    pub equipped: Equipment,
+    pub equipped: Equipped,
 }
 
 impl Profile {

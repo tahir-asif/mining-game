@@ -1,7 +1,7 @@
 use crate::{
     level::{Level, levels::LevelId, outcome::Outcome},
     main_menu::LoadSaveState,
-    save::{Equipment, Profile, STARTING_BACKPACK, STARTING_HAT, STARTING_PICK},
+    save::{Equipped, Profile, STARTING_BACKPACK, STARTING_HAT, STARTING_PICK},
 };
 
 pub enum GameState {
@@ -69,7 +69,7 @@ impl Game {
             slot,
             gold: 0,
             items: vec![],
-            equipped: Equipment {
+            equipped: Equipped {
                 pickaxe: &STARTING_PICK,
                 hat: &STARTING_HAT,
                 backpack: &STARTING_BACKPACK,

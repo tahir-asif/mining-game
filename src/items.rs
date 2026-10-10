@@ -1,5 +1,11 @@
 pub type ItemId = u8;
 
+pub enum Item {
+    Backpack(Backpack),
+    Hat(Hat),
+    Pickaxe(Pickaxe),
+}
+
 pub struct Backpack {
     pub id: ItemId,
     pub name: &'static str,
