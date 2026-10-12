@@ -55,3 +55,24 @@ pub static STARTING_BACKPACK: Backpack = Backpack {
     starting_tech: 10,
     price: 0,
 };
+
+pub static IRON_PICK: Pickaxe = Pickaxe {
+    id: 0,
+    name: "Iron Pick",
+    mining_power: 2,
+    price: 10,
+};
+
+pub static GOLD_PICK: Pickaxe = Pickaxe {
+    id: 0,
+    name: "Gold Pick",
+    mining_power: 5,
+    price: 20,
+};
+
+pub static DIAMOND_PICK: Pickaxe = Pickaxe {
+    id: 0,
+    name: "Diamond Pick",
+    mining_power: 50,
+    price: 100,
+};

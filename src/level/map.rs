@@ -1,7 +1,8 @@
 use crate::constants::*;
-use crate::level::block::{Block, BlockType, MiningOutcome};
+use crate::level::block::{Block, MiningOutcome};
 use crate::level::coordinate::MapCoords;
 use crate::level::levels::BlockId;
+use shared::block::blocktype_from_id;
 
 use macroquad::prelude::*;
 
@@ -13,9 +14,9 @@ pub struct GameMap {
 
 impl GameMap {
     pub fn new(width: u8, height: u8) -> Self {
-        let size = height * width;
+        let size = usize::from(width) * usize::from(height);
         GameMap {
-            map: vec![None; usize::from(size)],
+            map: vec![None; size],
             width,
             height,
         }
@@ -96,8 +97,7 @@ impl GameMap {
     }
 
     fn index_map(&self, coords: MapCoords) -> usize {
-        let i = coords.x * self.height + coords.z;
-        usize::from(i)
+        usize::from(coords.x) * usize::from(self.height) + usize::from(coords.z)
     }
 
     fn get_block(&mut self, coords: MapCoords) -> Option<&mut Block> {
@@ -109,24 +109,12 @@ impl GameMap {
         self.map[i].as_mut()
     }
 
-    fn _add_block(&mut self, coords: MapCoords, kind: BlockType) {
-        if self.is_block(coords) {
-            return;
-        }
-        if self.is_out_of_bounds(coords) {
-            return;
-        }
-
-        let i = self.index_map(coords);
-        self.map[i] = Some(Block::new(kind));
-    }
-
     fn add_block_from_id(&mut self, coords: MapCoords, id: BlockId) {
         if self.is_block(coords) || self.is_out_of_bounds(coords) {
             return;
         }
 
-        if let Some(block_kind) = self.block_from_id(id) {
+        if let Some(block_kind) = blocktype_from_id(id) {
             let i = self.index_map(coords);
             self.map[i] = Some(Block::new(block_kind));
         }
@@ -139,19 +127,5 @@ impl GameMap {
 
         let i = self.index_map(coords);
         self.map[i] = None;
-    }
-
-    fn block_from_id(&self, id: BlockId) -> Option<BlockType> {
-        match id {
-            0 => None,
-            1 => Some(BlockType::Wall1),
-            2 => Some(BlockType::Rock1),
-            3 => Some(BlockType::Rock2),
-            4 => Some(BlockType::Rock3),
-            5 => Some(BlockType::Ore1),
-            6 => Some(BlockType::Crystal1),
-            7 => Some(BlockType::Chest1),
-            _ => None,
-        }
     }
 }

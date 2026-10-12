@@ -1,8 +1,18 @@
+[workspace]
+members = [".", "shared", "level_editor"]
+resolver = "3"
+
 [package]
 name = "mining_game"
 version = "0.1.0"
 edition = "2024"
+build = "build.rs"
 
 [dependencies]
 egui-macroquad = "0.17.3"
 macroquad = "0.4.16"
+shared = { path = "shared" }
+
+[build-dependencies]
+ron = "0.12"
+shared = { path = "shared" }

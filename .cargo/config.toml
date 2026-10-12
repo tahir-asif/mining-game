@@ -1,0 +1,2 @@
+[alias]
+editor = "run --release -p level_editor"

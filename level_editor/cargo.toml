@@ -1,0 +1,23 @@
+[package]
+name = "level_editor"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "level_editor"
+path = "src/lib.rs"
+
+[[bin]]
+name = "level_editor"
+path = "src/main.rs"
+
+[dependencies]
+shared = { path = "../shared" }
+egui = "0.36.2"
+eframe = { version = "0.36.2", default-features = false, features = [
+    "glow",
+    "default_fonts",
+] }
+ron = "0.12"
+serde = { version = "1", features = ["derive"] }
+strum = "0.28.0"
