@@ -15,7 +15,7 @@ use crate::{
         block::MiningOutcome,
         camera::Camera,
         coordinate::MapCoords,
-        levels::{Goal, LevelData, LevelId, level_data},
+        levels::{Goal, LevelData, LevelId, get_level},
         map::GameMap,
         outcome::Outcome,
         player::Player,
@@ -41,7 +41,7 @@ pub struct Level {
 
 impl Level {
     pub fn new(id: LevelId, starting_energy: u16, starting_tech: u16, mining_power: u16) -> Self {
-        let meta_data = level_data(id).unwrap_or_else(|| panic!("Level ID {id} does not exist"));
+        let meta_data = get_level(id).unwrap_or_else(|| panic!("Level ID {id} does not exist"));
         let mut game_map = GameMap::new(meta_data.width, meta_data.height);
         let mut player = Player::new(
             meta_data.spawn,
@@ -138,6 +138,11 @@ impl Level {
         }
         let move_to = move_to; // remove mutability
 
+        if !self.game_map.is_block(move_to) {
+            self.player.move_to(move_to);
+            self.camera.point(move_to);
+        }
+
         if do_mine {
             let was_mine_successful = self.game_map.mine_block(move_to, self.player.mining_power);
             match was_mine_successful {
@@ -150,11 +155,5 @@ impl Level {
                 }
             }
         }
-
-        if self.game_map.is_block(move_to) {
-            return;
-        }
-        self.player.move_to(move_to);
-        self.camera.point(move_to);
     }
 }

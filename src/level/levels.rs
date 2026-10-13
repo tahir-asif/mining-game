@@ -15,7 +15,7 @@ pub struct LevelData {
     pub chests: &'static [(MapCoords, &'static Pickaxe)],
 }
 
-pub fn level_data(id: LevelId) -> Option<&'static LevelData> {
+pub fn get_level(id: LevelId) -> Option<&'static LevelData> {
     let id = usize::from(id);
     LEVELS.get(id).copied()
 }
