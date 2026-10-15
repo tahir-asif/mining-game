@@ -1,8 +1,4 @@
-use crate::{
-    items::{Item, Pickaxe},
-    level::MapCoords,
-    save::*,
-};
+use crate::{items::*, level::MapCoords};
 
 pub struct LevelData {
     pub id: LevelId,

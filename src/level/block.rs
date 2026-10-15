@@ -55,20 +55,20 @@ impl Block {
             BlockCategory::Rock => {
                 if let Some(hp) = self.health {
                     let after = hp.saturating_sub(power);
-                    self.health = Some(after);
                     if after == 0 {
                         return MiningOutcome::Destroyed;
                     }
+                    self.health = Some(after);
                 }
                 MiningOutcome::Damaged
             }
             BlockCategory::Ore => {
                 if let Some(hp) = self.health {
                     let after = hp.saturating_sub(power);
-                    self.health = Some(after);
                     if after == 0 {
                         return MiningOutcome::Gained(stats(self.kind).drops);
                     }
+                    self.health = Some(after);
                 }
                 MiningOutcome::Damaged
             }

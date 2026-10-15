@@ -1,11 +1,5 @@
 pub type ItemId = u8;
 
-pub enum Item {
-    Backpack(Backpack),
-    Hat(Hat),
-    Pickaxe(Pickaxe),
-}
-
 pub struct Backpack {
     pub id: ItemId,
     pub name: &'static str,
@@ -44,3 +38,49 @@ impl Pickaxe {
         self.mining_power
     }
 }
+
+// ----------------------------------------------------------------------------
+// All Items
+// ----------------------------------------------------------------------------
+
+pub static STARTING_PICK: Pickaxe = Pickaxe {
+    id: 0,
+    name: "Starting Pick",
+    mining_power: 1,
+    price: 0,
+};
+
+pub static STARTING_HAT: Hat = Hat {
+    id: 0,
+    name: "Starting Hat",
+    starting_energy: 10,
+    price: 0,
+};
+
+pub static STARTING_BACKPACK: Backpack = Backpack {
+    id: 0,
+    name: "Starting Backpack",
+    starting_tech: 10,
+    price: 0,
+};
+
+pub static IRON_PICK: Pickaxe = Pickaxe {
+    id: 0,
+    name: "Iron Pick",
+    mining_power: 2,
+    price: 10,
+};
+
+pub static GOLD_PICK: Pickaxe = Pickaxe {
+    id: 0,
+    name: "Gold Pick",
+    mining_power: 5,
+    price: 20,
+};
+
+pub static DIAMOND_PICK: Pickaxe = Pickaxe {
+    id: 0,
+    name: "Diamond Pick",
+    mining_power: 50,
+    price: 100,
+};

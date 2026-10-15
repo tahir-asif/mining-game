@@ -45,7 +45,7 @@ impl GameMap {
                 if let Some(block) = &self.map[i] {
                     draw_cube(
                         vec3(GRID_SIZE * (x as f32), 0.0, GRID_SIZE * (z as f32)),
-                        vec3(GRID_SIZE * 0.8, GRID_SIZE * 0.8, GRID_SIZE * 0.8),
+                        vec3(GRID_SIZE * 0.9, GRID_SIZE * 0.9, GRID_SIZE * 0.9),
                         None,
                         block.colour(),
                     );

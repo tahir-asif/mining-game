@@ -1,7 +1,8 @@
 use crate::{
+    items::{STARTING_BACKPACK, STARTING_HAT, STARTING_PICK},
     level::{Level, levels::LevelId, outcome::Outcome},
     main_menu::LoadSaveState,
-    save::{Equipped, Profile, STARTING_BACKPACK, STARTING_HAT, STARTING_PICK},
+    save::{Equipped, Profile},
 };
 
 pub enum GameState {
