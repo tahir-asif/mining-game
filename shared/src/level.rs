@@ -1,3 +1,4 @@
+use crate::ItemId;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -9,7 +10,7 @@ pub struct RawLevel {
     pub goal: RawGoal,
     pub prerequisites: Vec<u32>,
     pub grid: Vec<Vec<u8>>,
-    pub chests: Vec<((u8, u8), String)>,
+    pub chests: Vec<((u8, u8), ItemId)>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]

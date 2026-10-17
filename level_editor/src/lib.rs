@@ -5,7 +5,8 @@ mod palette;
 use eframe::egui;
 use palette::{Brush, all_brushes, color, color_for_id, label, name_for_id};
 use shared::block::{BlockType, ID_EMPTY};
-use shared::{RawGoal, RawLevel};
+use shared::items::get_item;
+use shared::{ITEMS, ItemId, RawGoal, RawLevel};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
@@ -20,7 +21,6 @@ enum Tool {
 
 const SAVED_VISIBLE: Duration = Duration::from_secs(2);
 const HISTORY_MAX: usize = 50;
-const CHEST_ITEM_SEED: &[&str] = &["IRON_PICK", "GOLD_PICK", "DIAMOND_PICK"];
 
 struct History {
     undo: Vec<Vec<RawLevel>>,
@@ -92,10 +92,8 @@ pub struct LevelEditor {
     pan_drag_origin: Option<(egui::Pos2, egui::Vec2)>,
 
     // Chest flow
-    chest_item_input: String,
     pending_chest: Option<(u8, u8)>,
-    chest_input_needs_focus: bool,
-    chest_items_history: Vec<String>,
+    pending_chest_item: ItemId,
 
     // Status / save / delete
     saved_at: Option<Instant>,
@@ -118,18 +116,6 @@ impl LevelEditor {
             }
         }
 
-        let mut history_items: Vec<String> = CHEST_ITEM_SEED
-            .iter()
-            .map(|s: &&str| s.to_string())
-            .collect();
-
-        for lvl in levels.iter() {
-            for (_, name) in lvl.chests.iter() {
-                if !history_items.iter().any(|x: &String| x == name) {
-                    history_items.push(name.clone());
-                }
-            }
-        }
         Self {
             levels,
             levels_path,
@@ -145,10 +131,8 @@ impl LevelEditor {
             drag_is_active: false,
             pan: egui::Vec2::ZERO,
             pan_drag_origin: None,
-            chest_item_input: String::new(),
             pending_chest: None,
-            chest_input_needs_focus: false,
-            chest_items_history: history_items,
+            pending_chest_item: ITEMS.first().map_or(0, |entry| entry.id),
             saved_at: None,
             pending_delete: false,
             history: History::new(),
@@ -282,9 +266,10 @@ impl LevelEditor {
                 self.dirty = true;
             }
             Brush::Block(BlockType::Chest1) => {
+                if let Some((_, id)) = level.chests.iter().find(|(c, _)| *c == (x, z)) {
+                    self.pending_chest_item = *id;
+                }
                 self.pending_chest = Some((x, z));
-                self.chest_item_input.clear();
-                self.chest_input_needs_focus = true;
             }
             Brush::Block(kind) => {
                 put_cell(level, x, z, kind.id());
@@ -424,8 +409,9 @@ impl LevelEditor {
             let level = &self.levels[self.current];
             let desc = if (x, z) == level.spawn {
                 "PlayerSpawn".to_string()
-            } else if let Some((_, item)) = level.chests.iter().find(|(c, _)| *c == (x, z)) {
-                format!("Chest — {item}")
+            } else if let Some((_, id)) = level.chests.iter().find(|(c, _)| *c == (x, z)) {
+                let name = get_item(*id).map(|item| item.name()).unwrap_or("unknown item");
+                format!("Chest — {name}")
             } else {
                 let id = level.grid[z as usize][x as usize];
                 name_for_id(id)
@@ -770,38 +756,25 @@ impl LevelEditor {
             .open(&mut open)
             .show(ctx, |ui| {
                 ui.label(format!("Item for chest at ({cx}, {cz}):"));
-                let resp = ui.text_edit_singleline(&mut self.chest_item_input);
-                if self.chest_input_needs_focus {
-                    resp.request_focus();
-                    self.chest_input_needs_focus = false;
-                }
-                ui.separator();
-                ui.label("Previously used:");
                 egui::ScrollArea::vertical()
-                    .max_height(160.0)
+                    .max_height(220.0)
                     .show(ui, |ui| {
-                        let hist: Vec<String> = self.chest_items_history.clone();
-                        for item in hist {
-                            if ui.selectable_label(false, &item).clicked() {
-                                self.chest_item_input = item;
+                        for entry in ITEMS {
+                            let selected = self.pending_chest_item == entry.id;
+                            if ui.selectable_label(selected, entry.item.name()).clicked() {
+                                self.pending_chest_item = entry.id;
                             }
                         }
                     });
                 ui.separator();
                 ui.horizontal(|ui| {
                     if ui.button("OK").clicked() {
-                        let name = self.chest_item_input.trim().to_uppercase();
-                        if !name.is_empty() {
-                            let level = &mut self.levels[self.current];
-                            if (cx, cz) != level.spawn {
-                                put_cell(level, cx, cz, BlockType::Chest1.id());
-                                level.chests.retain(|(c, _)| *c != (cx, cz));
-                                level.chests.push(((cx, cz), name.clone()));
-                                if !self.chest_items_history.iter().any(|x| x == &name) {
-                                    self.chest_items_history.push(name);
-                                }
-                                self.dirty = true;
-                            }
+                        let level = &mut self.levels[self.current];
+                        if (cx, cz) != level.spawn {
+                            put_cell(level, cx, cz, BlockType::Chest1.id());
+                            level.chests.retain(|(c, _)| *c != (cx, cz));
+                            level.chests.push(((cx, cz), self.pending_chest_item));
+                            self.dirty = true;
                         }
                         self.pending_chest = None;
                     }

@@ -47,7 +47,7 @@ fn generate_level(l: &shared::RawLevel) -> String {
     s.push_str("    chests: &[\n");
     for ((x, z), item) in &l.chests {
         s.push_str(&format!(
-            "        (MapCoords {{ x: {x}, z: {z} }}, &{item}),\n"
+            "        (MapCoords {{ x: {x}, z: {z} }}, {item}),\n"
         ));
     }
     s.push_str("    ],\n");

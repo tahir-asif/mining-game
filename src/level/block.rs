@@ -4,6 +4,7 @@ use shared::BlockType;
 pub enum DropKind {
     Gold,
     Energy,
+    Item,
 }
 
 pub struct Drop {
@@ -153,5 +154,5 @@ static CHEST_1: BlockDef = BlockDef {
     category: BlockCategory::Chest,
     max_health: None,
     colour: Color::from_rgba(255, 220, 40, 255),
-    drops: &[],
+    drops: &[Drop::new(DropKind::Item, 1)],
 };

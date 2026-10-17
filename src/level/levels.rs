@@ -1,4 +1,6 @@
-use crate::{items::*, level::MapCoords};
+use shared::ItemId;
+
+use crate::level::MapCoords;
 
 pub struct LevelData {
     pub id: LevelId,
@@ -8,7 +10,7 @@ pub struct LevelData {
     pub goal: Goal,
     pub prerequisites: &'static [LevelId],
     pub block_ids: &'static [BlockId],
-    pub chests: &'static [(MapCoords, &'static Pickaxe)],
+    pub chests: &'static [(MapCoords, ItemId)],
 }
 
 pub fn get_level(id: LevelId) -> Option<&'static LevelData> {

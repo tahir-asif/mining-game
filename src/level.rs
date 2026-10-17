@@ -24,6 +24,7 @@ use crate::{
 };
 
 use macroquad::prelude::*;
+use shared::items::get_item;
 
 enum Direction {
     Left,
@@ -92,8 +93,15 @@ impl Level {
     }
 
     fn calc_winnings(&self) -> Winnings {
+        let items = self
+            .player
+            .collected_items
+            .iter()
+            .filter_map(|&id| get_item(id))
+            .collect();
         Winnings {
             gold: self.player.collected_gold,
+            items,
         }
     }
 
@@ -138,20 +146,39 @@ impl Level {
         }
         let move_to = move_to; // remove mutability
 
-        if !self.game_map.is_block(move_to) {
-            self.player.move_to(move_to);
-            self.camera.point(move_to);
-        }
+        // don't move after mining block
+        // if !self.game_map.is_block(move_to) {
+        //     self.player.move_to(move_to);
+        //     self.camera.point(move_to);
+        // }
 
         if do_mine {
-            let was_mine_successful = self.game_map.mine_block(move_to, self.player.mining_power);
-            match was_mine_successful {
-                None => {}
-                Some(MiningOutcome::Unbreakable) => {}
-                Some(MiningOutcome::Damaged) => self.player.spend_energy(),
-                Some(MiningOutcome::Destroyed) => self.player.spend_energy(),
-                Some(MiningOutcome::Gained(drops)) => {
-                    self.player.collect_drops(drops);
+            self.mine(move_to);
+        }
+
+        self.player.move_to(move_to);
+        self.camera.point(move_to);
+    }
+
+    fn mine(&mut self, block: MapCoords) {
+        let was_mine_successful = self.game_map.mine_block(block, self.player.mining_power);
+        match was_mine_successful {
+            None => {}
+            Some(MiningOutcome::Unbreakable) => {}
+            Some(MiningOutcome::Damaged) => self.player.spend_energy(),
+            Some(MiningOutcome::Destroyed) => self.player.spend_energy(),
+            Some(MiningOutcome::Gained(drops)) => {
+                let chest_loot = self.player.collect_drops(drops);
+                if chest_loot {
+                    let chest_loot = self
+                        .meta_data
+                        .chests
+                        .iter()
+                        .find(|(coord, _)| *coord == block)
+                        .map(|(_, id)| id);
+                    if let Some(loot) = chest_loot {
+                        self.player.collected_items.push(*loot);
+                    }
                 }
             }
         }

@@ -3,6 +3,7 @@ use crate::level::block::{Drop, DropKind};
 use crate::level::coordinate::MapCoords;
 
 use macroquad::prelude::*;
+use shared::ItemId;
 
 pub struct Player {
     coords: MapCoords,
@@ -10,6 +11,7 @@ pub struct Player {
     pub tech: u16,
     pub mining_power: u16,
     pub collected_gold: u16,
+    pub collected_items: Vec<ItemId>,
 }
 
 impl Player {
@@ -20,6 +22,7 @@ impl Player {
             tech,
             mining_power,
             collected_gold: 0,
+            collected_items: vec![],
         }
     }
 
@@ -35,7 +38,7 @@ impl Player {
         self.energy -= 1;
     }
 
-    pub fn collect_drops(&mut self, drops: &'static [Drop]) {
+    pub fn collect_drops(&mut self, drops: &'static [Drop]) -> bool {
         for drop in drops {
             match drop.kind {
                 DropKind::Energy => {
@@ -44,8 +47,12 @@ impl Player {
                 DropKind::Gold => {
                     self.collected_gold += drop.amount;
                 }
+                DropKind::Item => {
+                    return true;
+                }
             }
         }
+        false
     }
 
     pub fn draw(&mut self) {

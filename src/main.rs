@@ -1,7 +1,6 @@
 mod constants;
 mod game;
 mod hub;
-mod items;
 mod level;
 mod main_menu;
 mod save;
