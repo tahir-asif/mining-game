@@ -60,6 +60,14 @@ impl ItemRef {
         matches!(self, ItemRef::Backpack(_))
     }
 
+    pub fn price(self) -> u16 {
+        match self {
+            ItemRef::Pickaxe(pickaxe) => pickaxe.price,
+            ItemRef::Hat(hat) => hat.price,
+            ItemRef::Backpack(backpack) => backpack.price,
+        }
+    }
+
     pub fn same_item(self, other: ItemRef) -> bool {
         match (self, other) {
             (ItemRef::Pickaxe(a), ItemRef::Pickaxe(b)) => std::ptr::eq(a, b),
@@ -121,27 +129,27 @@ pub fn get_item(id: ItemId) -> Option<ItemRef> {
 
 pub static STARTING_PICK: Pickaxe = Pickaxe {
     name: "Starting Pick",
-    price: 0,
+    price: 1,
     mining_power: 1,
 };
 pub static STARTING_HAT: Hat = Hat {
     name: "Starting Hat",
-    price: 20,
+    price: 1,
     starting_energy: 10,
 };
 pub static STARTING_BACKPACK: Backpack = Backpack {
     name: "Starting Backpack",
-    price: 10,
+    price: 1,
     starting_tech: 10,
 };
 pub static IRON_PICK: Pickaxe = Pickaxe {
     name: "Iron Pick",
-    price: 0,
+    price: 10,
     mining_power: 2,
 };
 pub static GOLD_PICK: Pickaxe = Pickaxe {
     name: "Gold Pick",
-    price: 100,
+    price: 30,
     mining_power: 5,
 };
 pub static DIAMOND_PICK: Pickaxe = Pickaxe {

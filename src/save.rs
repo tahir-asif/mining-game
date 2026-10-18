@@ -29,9 +29,7 @@ impl Profile {
     }
 
     pub fn equip(&mut self, item: ItemRef) {
-        if let Some(index) = self.items.iter().position(|&i| i.same_item(item)) {
-            self.items.remove(index);
-        }
+        self.remove_item(item);
 
         match item {
             ItemRef::Pickaxe(pickaxe) => {
@@ -46,6 +44,18 @@ impl Profile {
                 self.items.push(ItemRef::Backpack(self.equipped.backpack));
                 self.equipped.backpack = backpack;
             }
+        }
+    }
+
+    pub fn sell(&mut self, item: ItemRef) {
+        self.remove_item(item);
+
+        self.gold += item.price();
+    }
+
+    fn remove_item(&mut self, item: ItemRef) {
+        if let Some(index) = self.items.iter().position(|&i| i.same_item(item)) {
+            self.items.remove(index);
         }
     }
 
