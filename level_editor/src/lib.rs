@@ -417,28 +417,6 @@ impl LevelEditor {
             return;
         }
 
-        // --- Hover ---
-        ui.heading("Hover");
-        if let Some((x, z)) = self.hover_cell {
-            let level = &self.levels[self.current];
-            let desc = if (x, z) == level.spawn {
-                "PlayerSpawn".to_string()
-            } else if let Some((_, id)) = level.chests.iter().find(|(c, _)| *c == (x, z)) {
-                let name = get_item(*id).map(|item| item.name()).unwrap_or("unknown item");
-                format!("Chest — {name}")
-            } else {
-                let id = level.grid[z as usize][x as usize];
-                name_for_id(id)
-                    .map(|name| name.to_string())
-                    .unwrap_or(format!("id {id}"))
-            };
-            ui.label(format!("({x}, {z}) — {desc}"));
-        } else {
-            ui.label("(outside grid)");
-        }
-
-        ui.separator();
-
         // --- Level ---
         ui.heading("Level");
 
@@ -677,13 +655,26 @@ impl LevelEditor {
             let cell_min = interior_origin + egui::vec2(x as f32 * cell_size, z as f32 * cell_size);
             let cell_rect = egui::Rect::from_min_size(cell_min, egui::vec2(cell_size, cell_size));
             if viewport.intersects(cell_rect) {
-                painter.text(
-                    cell_rect.center(),
-                    egui::Align2::CENTER_CENTER,
-                    "G",
-                    egui::FontId::proportional(cell_size * 0.65),
-                    egui::Color32::from_rgb(240, 90, 200),
-                );
+                let outline = egui::Stroke::new(8.0, egui::Color32::BLACK);
+                let fill = egui::Stroke::new(2.5, egui::Color32::WHITE);
+                let target = cell_rect.shrink(outline.width * 0.5);
+                let diagonals = [
+                    [target.left_top(), target.right_bottom()],
+                    [target.right_top(), target.left_bottom()],
+                ];
+                let extend = (outline.width - fill.width) * 0.5;
+
+                for diagonal in diagonals {
+                    let [start, end] = diagonal;
+                    let direction = (end - start).normalized();
+                    painter.line_segment(
+                        [start - direction * extend, end + direction * extend],
+                        outline,
+                    );
+                }
+                for diagonal in diagonals {
+                    painter.line_segment(diagonal, fill);
+                }
             }
         }
 
@@ -757,6 +748,50 @@ impl LevelEditor {
                 egui::StrokeKind::Inside,
             );
         }
+
+        // --- Hover indicator ---
+        let (coords_text, desc_text) = match self.hover_cell {
+            Some((x, z)) => {
+                let desc = if (x, z) == level.spawn {
+                    "PlayerSpawn".to_string()
+                } else if let Some((_, id)) = level.chests.iter().find(|(c, _)| *c == (x, z)) {
+                    let name = get_item(*id).map(|item| item.name()).unwrap_or("unknown item");
+                    format!("Chest — {name}")
+                } else {
+                    let id = level.grid[z as usize][x as usize];
+                    name_for_id(id)
+                        .map(|name| name.to_string())
+                        .unwrap_or(format!("id {id}"))
+                };
+                (format!("({x}, {z})"), Some(desc))
+            }
+            None => ("(outside grid)".to_string(), None),
+        };
+
+        let font = egui::FontId::proportional(14.0);
+        let text_color = egui::Color32::BLACK;
+        let coords_galley = painter.layout_no_wrap(coords_text, font.clone(), text_color);
+        let desc_galley = desc_text.map(|desc| painter.layout_no_wrap(desc, font, text_color));
+        let line_height = coords_galley.size().y;
+        let text_min = viewport.min + egui::vec2(2.0, 2.0);
+        painter.galley(text_min, coords_galley, text_color);
+        if let Some(desc_galley) = desc_galley {
+            painter.galley(text_min + egui::vec2(0.0, line_height), desc_galley, text_color);
+        }
+    }
+
+    fn commit_chest(&mut self) {
+        let Some((cx, cz)) = self.pending_chest else {
+            return;
+        };
+        let level = &mut self.levels[self.current];
+        if (cx, cz) != level.spawn {
+            put_cell(level, cx, cz, BlockType::Chest1.id());
+            level.chests.retain(|(c, _)| *c != (cx, cz));
+            level.chests.push(((cx, cz), self.pending_chest_item));
+            self.dirty = true;
+        }
+        self.pending_chest = None;
     }
 
     fn show_chest_window(&mut self, ctx: &egui::Context) {
@@ -776,22 +811,20 @@ impl LevelEditor {
                     .show(ui, |ui| {
                         for entry in ITEMS {
                             let selected = self.pending_chest_item == entry.id;
-                            if ui.selectable_label(selected, entry.item.name()).clicked() {
+                            let response = ui.selectable_label(selected, entry.item.name());
+                            if response.clicked() {
                                 self.pending_chest_item = entry.id;
+                            }
+                            if response.double_clicked() {
+                                self.pending_chest_item = entry.id;
+                                self.commit_chest();
                             }
                         }
                     });
                 ui.separator();
                 ui.horizontal(|ui| {
                     if ui.button("OK").clicked() {
-                        let level = &mut self.levels[self.current];
-                        if (cx, cz) != level.spawn {
-                            put_cell(level, cx, cz, BlockType::Chest1.id());
-                            level.chests.retain(|(c, _)| *c != (cx, cz));
-                            level.chests.push(((cx, cz), self.pending_chest_item));
-                            self.dirty = true;
-                        }
-                        self.pending_chest = None;
+                        self.commit_chest();
                     }
                     if ui.button("Cancel").clicked() {
                         self.pending_chest = None;
