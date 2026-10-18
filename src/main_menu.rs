@@ -10,23 +10,40 @@ pub fn main_menu_update() -> TransitionState {
     clear_background(MAROON);
 
     egui_macroquad::ui(|egui_ctx| {
-        let frame = egui::Frame::new().fill(egui::Color32::TRANSPARENT);
+        let frame = egui::Frame::new()
+            .fill(egui::Color32::TRANSPARENT)
+            .inner_margin(30.0);
 
         egui::CentralPanel::default()
             .frame(frame)
             .show(egui_ctx, |ui| {
-                ui.vertical_centered(|ui| {
-                    ui.label("Puzzle Miner");
-                    if ui.button("Play").clicked() {
-                        transition =
-                            TransitionState::GoTo(GameState::LoadSave(LoadSaveState::new()));
-                    }
-                    if ui.button("Settings").clicked() {
-                        transition = TransitionState::GoTo(GameState::Settings);
-                    }
-                    if ui.button("Quit").clicked() {
-                        transition = TransitionState::Quit;
-                    }
+                ui.vertical(|ui| {
+                    ui.label(egui::RichText::new("Puzzle Miner").size(64.0));
+                    ui.add_space(30.0);
+
+                    ui.scope(|ui| {
+                        ui.style_mut().text_styles.insert(
+                            egui::TextStyle::Button,
+                            egui::FontId::new(32.0, egui::FontFamily::Proportional),
+                        );
+
+                        let button_size = egui::vec2(260.0, 40.0);
+                        let btn = ui.add_sized(button_size, egui::Button::new("Play"));
+                        if btn.clicked() {
+                            transition =
+                                TransitionState::GoTo(GameState::LoadSave(LoadSaveState::new()));
+                        }
+                        ui.add_space(24.0);
+                        let btn = ui.add_sized(button_size, egui::Button::new("Settings"));
+                        if btn.clicked() {
+                            transition = TransitionState::GoTo(GameState::Settings);
+                        }
+                        ui.add_space(24.0);
+                        let btn = ui.add_sized(button_size, egui::Button::new("Quit"));
+                        if btn.clicked() {
+                            transition = TransitionState::Quit;
+                        }
+                    });
                 });
             });
     });
@@ -79,7 +96,9 @@ pub fn load_save_update(state: &mut LoadSaveState) -> TransitionState {
     clear_background(BEIGE);
 
     egui_macroquad::ui(|egui_ctx| {
-        let frame = egui::Frame::new().fill(egui::Color32::TRANSPARENT);
+        let frame = egui::Frame::new()
+            .fill(egui::Color32::TRANSPARENT)
+            .inner_margin(20.0);
 
         egui::CentralPanel::default()
             .frame(frame)
@@ -88,6 +107,7 @@ pub fn load_save_update(state: &mut LoadSaveState) -> TransitionState {
                     if ui.button("Main Menu").clicked() {
                         transition = TransitionState::GoTo(GameState::MainMenu);
                     }
+                    ui.add_space(30.0);
                     for (i, slot) in state.slots.iter_mut().enumerate() {
                         ui.horizontal(|ui| {
                             ui.label(format!("Slot {i}"));
@@ -99,6 +119,7 @@ pub fn load_save_update(state: &mut LoadSaveState) -> TransitionState {
                                 };
                             };
                         });
+                        ui.add_space(10.0);
                     }
                 });
             });

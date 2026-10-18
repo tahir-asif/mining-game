@@ -1,9 +1,10 @@
 use crate::{
+    hub::Hub,
     level::{Level, levels::LevelId, outcome::Outcome},
     main_menu::LoadSaveState,
     save::{Equipped, Profile},
 };
-use shared::{STARTING_BACKPACK, STARTING_HAT, STARTING_PICK};
+use shared::{ItemRef, STARTING_BACKPACK, STARTING_HAT, STARTING_PICK};
 
 pub enum GameState {
     MainMenu,
@@ -24,15 +25,17 @@ pub enum TransitionState {
 }
 
 pub struct Game {
-    profile: Option<Profile>,
     state: GameState,
+    profile: Option<Profile>,
+    hub: Option<Hub>,
 }
 
 impl Game {
     pub fn new() -> Self {
         Game {
-            profile: None,
             state: GameState::MainMenu,
+            profile: None,
+            hub: None,
         }
     }
 
@@ -62,13 +65,78 @@ impl Game {
             self.init_profile(n, s);
         }
         self.state = GameState::Hub;
+        self.hub = Some(Hub::new());
     }
 
     fn init_profile(&mut self, profile_name: String, slot: usize) {
+        let test = vec![
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Pickaxe(&STARTING_PICK),
+            ItemRef::Hat(&STARTING_HAT),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+            ItemRef::Backpack(&STARTING_BACKPACK),
+        ];
+
         self.profile = Some(Profile {
             name: profile_name,
             slot,
             gold: 0,
+            // items: test,
             items: vec![],
             equipped: Equipped {
                 pickaxe: &STARTING_PICK,
@@ -76,6 +144,13 @@ impl Game {
                 backpack: &STARTING_BACKPACK,
             },
         })
+    }
+
+    // Hub
+    pub fn hub_update(&mut self) -> TransitionState {
+        let hub = self.hub.as_mut().expect("Hub does not exist.");
+        let profile = self.profile.as_mut().expect("Profile does not exist.");
+        hub.hub_update(profile)
     }
 
     // Level transition helper functions

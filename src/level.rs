@@ -136,17 +136,9 @@ impl Level {
             Direction::Up => (0, 1),
             Direction::Down => (0, -1),
         };
-        let mut move_to: MapCoords = self.player.get_coords().add((dx, dz));
-        // if trying to move out of bounds, undo that movement
-        if move_to.x > u8::try_from(self.game_map.get_width()).expect("map width > u8") {
-            move_to.x -= 1
-        }
-        if move_to.z > u8::try_from(self.game_map.get_height()).expect("map height > u8") {
-            move_to.z -= 1
-        }
-        let move_to = move_to; // remove mutability
+        let move_to: MapCoords = self.player.get_coords().add((dx, dz));
 
-        // don't move after mining block
+        // don't move after mining a block
         // if !self.game_map.is_block(move_to) {
         //     self.player.move_to(move_to);
         //     self.camera.point(move_to);
@@ -156,6 +148,10 @@ impl Level {
             self.mine(move_to);
         }
 
+        // do move after mining a block
+        if self.game_map.is_block(move_to) {
+            return;
+        }
         self.player.move_to(move_to);
         self.camera.point(move_to);
     }

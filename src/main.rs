@@ -9,7 +9,6 @@ mod styles;
 use crate::{
     constants::{WINDOW_HEIGHT_INT, WINDOW_WIDTH_INT},
     game::{Game, GameState, TransitionState},
-    hub::hub_update,
     main_menu::{load_save_update, main_menu_update, settings_update},
     styles::{setup_custom_fonts, setup_global_style},
 };
@@ -51,7 +50,7 @@ async fn main() {
             GameState::MainMenu => main_menu_update(),
             GameState::Settings => settings_update(),
             GameState::LoadSave(state) => load_save_update(state),
-            GameState::Hub => hub_update(game.get_profile()),
+            GameState::Hub => game.hub_update(),
             GameState::Level(level) => level.update(&mut debug_toggle, &mut top_down_camera_toggle),
             GameState::Quit => {
                 is_quit = true;
