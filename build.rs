@@ -34,7 +34,6 @@ fn generate_level(l: &shared::RawLevel) -> String {
     s.push_str(&format!("    width: {},\n", l.width));
     s.push_str(&format!("    height: {},\n", l.height));
     s.push_str(&format!("    goal: {},\n", goal_to_rust(&l.goal)));
-    s.push_str(&format!("    prerequisites: &{:?},\n", l.prerequisites));
     s.push_str("    block_ids: &[\n");
     for row in &l.grid {
         s.push_str("        ");

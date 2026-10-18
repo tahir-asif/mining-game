@@ -164,7 +164,6 @@ impl LevelEditor {
     fn new_level(&mut self) {
         self.history.snapshot(&self.levels);
         let next_id = self.levels.iter().map(|l| l.id).max().map_or(0, |m| m + 1);
-        let prev_id = next_id.saturating_sub(1);
         let (w, h) = (20u8, 15u8);
         let wid = BlockType::Wall1.id();
         let mut grid = vec![vec![ID_EMPTY; w as usize]; h as usize];
@@ -182,7 +181,6 @@ impl LevelEditor {
             width: w,
             height: h,
             goal: RawGoal::MineAllGold,
-            prerequisites: if next_id == 0 { vec![] } else { vec![prev_id] },
             grid,
             chests: vec![],
         });

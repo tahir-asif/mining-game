@@ -4,10 +4,7 @@ use crate::{
     main_menu::LoadSaveState,
     save::{Equipped, Profile},
 };
-use shared::{
-    ItemRef, STARTING_BACKPACK, STARTING_HAT, STARTING_PICK,
-    items::{DIAMOND_PICK, GOLD_PICK, IRON_PICK},
-};
+use shared::{STARTING_BACKPACK, STARTING_HAT, STARTING_PICK};
 
 pub enum GameState {
     MainMenu,

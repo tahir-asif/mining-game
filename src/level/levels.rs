@@ -8,7 +8,6 @@ pub struct LevelData {
     pub width: u8,
     pub height: u8,
     pub goal: Goal,
-    pub prerequisites: &'static [LevelId],
     pub block_ids: &'static [BlockId],
     pub chests: &'static [(MapCoords, ItemId)],
 }

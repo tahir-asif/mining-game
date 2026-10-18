@@ -8,7 +8,6 @@ pub struct RawLevel {
     pub width: u8,
     pub height: u8,
     pub goal: RawGoal,
-    pub prerequisites: Vec<u32>,
     pub grid: Vec<Vec<u8>>,
     pub chests: Vec<((u8, u8), ItemId)>,
 }
