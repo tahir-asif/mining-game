@@ -48,7 +48,7 @@ impl Hub {
                 .exact_width(panel_width)
                 .resizable(false)
                 .show(ctx, |ui| {
-                    self.draw_right_sidebar(ui, &mut transition);
+                    self.draw_right_sidebar(ui, &mut transition, profile);
                 });
 
             egui::CentralPanel::default().frame(frame).show(ctx, |ui| {
@@ -104,15 +104,29 @@ impl Hub {
         });
     }
 
-    fn draw_right_sidebar(&mut self, ui: &mut Ui, transition: &mut TransitionState) {
+    fn draw_right_sidebar(
+        &mut self,
+        ui: &mut Ui,
+        transition: &mut TransitionState,
+        profile: &Profile,
+    ) {
         ui.vertical_centered_justified(|ui| {
             ui.label("Levels");
-            for level in LEVELS {
-                let label = format!("{}", level.id + 1);
-                if ui.button(&label).clicked() {
-                    *transition = TransitionState::StartLevel(level.id);
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                let mut unlocked = true;
+                for level in LEVELS {
+                    let label = format!("{}", level.id + 1);
+                    let btn = egui::Button::new(&label);
+
+                    if level.id > profile.latest_completed_level {
+                        unlocked = false;
+                    }
+
+                    if ui.add_enabled(unlocked, btn).clicked() {
+                        *transition = TransitionState::StartLevel(level.id);
+                    }
                 }
-            }
+            });
         });
     }
 }

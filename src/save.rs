@@ -1,5 +1,6 @@
 use crate::level::winnings::Winnings;
 use shared::items::{Backpack, Hat, ItemRef, Pickaxe};
+use std::cmp;
 
 pub struct Equipped {
     pub pickaxe: &'static Pickaxe,
@@ -13,9 +14,25 @@ pub struct Profile {
     pub gold: u16,
     pub items: Vec<ItemRef>,
     pub equipped: Equipped,
+    pub latest_completed_level: u8,
 }
 
 impl Profile {
+    pub const fn new(name: String, slot: usize) -> Self {
+        Profile {
+            name,
+            slot,
+            gold: 0,
+            items: vec![],
+            equipped: Equipped {
+                pickaxe: &shared::STARTING_PICK,
+                hat: &shared::STARTING_HAT,
+                backpack: &shared::STARTING_BACKPACK,
+            },
+            latest_completed_level: 0,
+        }
+    }
+
     pub fn starting_energy(&self) -> u16 {
         self.equipped.hat.starting_energy
     }
@@ -62,5 +79,7 @@ impl Profile {
     pub fn collect_winnings(&mut self, winnings: Winnings) {
         self.gold += winnings.gold;
         self.items.extend(winnings.items);
+        self.latest_completed_level =
+            cmp::max(winnings.latest_completed_level, self.latest_completed_level);
     }
 }

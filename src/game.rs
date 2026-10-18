@@ -2,9 +2,8 @@ use crate::{
     hub::Hub,
     level::{Level, levels::LevelId, outcome::Outcome},
     main_menu::LoadSaveState,
-    save::{Equipped, Profile},
+    save::Profile,
 };
-use shared::{STARTING_BACKPACK, STARTING_HAT, STARTING_PICK};
 
 pub enum GameState {
     MainMenu,
@@ -60,26 +59,12 @@ impl Game {
         self.profile.as_mut().expect("Profile does not exist.")
     }
 
-    fn load_profile(&mut self, s: usize, n: String) {
+    fn load_profile(&mut self, slot: usize, name: String) {
         if self.profile.is_none() {
-            self.init_profile(n, s);
+            self.profile = Some(Profile::new(name, slot))
         }
         self.state = GameState::Hub;
         self.hub = Some(Hub::new());
-    }
-
-    fn init_profile(&mut self, profile_name: String, slot: usize) {
-        self.profile = Some(Profile {
-            name: profile_name,
-            slot,
-            gold: 0,
-            items: vec![],
-            equipped: Equipped {
-                pickaxe: &STARTING_PICK,
-                hat: &STARTING_HAT,
-                backpack: &STARTING_BACKPACK,
-            },
-        })
     }
 
     // Hub
@@ -101,7 +86,11 @@ impl Game {
 
     fn end_level(&mut self, result: Outcome) {
         match result {
-            Outcome::Win(winnings) => self.get_profile().collect_winnings(winnings),
+            Outcome::Win(winnings) => {
+                let profile = self.get_profile();
+                profile.collect_winnings(winnings);
+                profile.latest_completed_level += 1;
+            }
             Outcome::Lose => {}
             Outcome::Exit => {}
         }

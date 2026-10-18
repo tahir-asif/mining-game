@@ -148,6 +148,7 @@ impl Level {
         Winnings {
             gold: self.player.collected_gold,
             items,
+            latest_completed_level: self.meta_data.id,
         }
     }
 
