@@ -48,6 +48,27 @@ impl ItemRef {
         }
     }
 
+    pub fn is_pickaxe(self) -> bool {
+        matches!(self, ItemRef::Pickaxe(_))
+    }
+
+    pub fn is_hat(self) -> bool {
+        matches!(self, ItemRef::Hat(_))
+    }
+
+    pub fn is_backpack(self) -> bool {
+        matches!(self, ItemRef::Backpack(_))
+    }
+
+    pub fn same_item(self, other: ItemRef) -> bool {
+        match (self, other) {
+            (ItemRef::Pickaxe(a), ItemRef::Pickaxe(b)) => std::ptr::eq(a, b),
+            (ItemRef::Hat(a), ItemRef::Hat(b)) => std::ptr::eq(a, b),
+            (ItemRef::Backpack(a), ItemRef::Backpack(b)) => std::ptr::eq(a, b),
+            _ => false,
+        }
+    }
+
     pub fn pickaxe(self) -> Option<&'static Pickaxe> {
         match self {
             ItemRef::Pickaxe(item) => Some(item),

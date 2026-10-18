@@ -1,8 +1,12 @@
+mod crafting;
+mod inventory;
+
 use crate::{
     game::{GameState, TransitionState},
+    hub::{crafting::draw_crafting, inventory::draw_inventory},
     level::levels::LEVELS,
     save::Profile,
-    styles::{header_text, small_text},
+    styles::small_text,
 };
 use egui_macroquad::egui::{self, Align, Color32, Layout, Ui};
 
@@ -111,37 +115,4 @@ impl Hub {
             }
         });
     }
-}
-
-fn draw_inventory(ui: &mut Ui, profile: &mut Profile) {
-    ui.vertical(|ui| {
-        ui.label(header_text("Inventory"));
-
-        let grid_spacing = 8.0;
-        let column_target_width = 120.0;
-        let available_width = ui.available_width();
-        let num_cols = ((available_width + grid_spacing) / (column_target_width + grid_spacing))
-            .floor()
-            .max(1.0) as usize;
-
-        egui::ScrollArea::vertical().show(ui, |ui| {
-            egui::Grid::new("inventory-grid")
-                .spacing(egui::vec2(grid_spacing, grid_spacing))
-                .show(ui, |ui| {
-                    for (i, item) in profile.items.iter().enumerate() {
-                        ui.button(item.name());
-
-                        if (i + 1) % num_cols == 0 {
-                            ui.end_row();
-                        }
-                    }
-                });
-        });
-    });
-}
-
-fn draw_crafting(ui: &mut Ui) {
-    ui.vertical(|ui| {
-        ui.label(header_text("Crafting"));
-    });
 }

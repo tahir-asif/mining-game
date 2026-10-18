@@ -28,6 +28,27 @@ impl Profile {
         self.equipped.pickaxe.mining_power
     }
 
+    pub fn equip(&mut self, item: ItemRef) {
+        if let Some(index) = self.items.iter().position(|&i| i.same_item(item)) {
+            self.items.remove(index);
+        }
+
+        match item {
+            ItemRef::Pickaxe(pickaxe) => {
+                self.items.push(ItemRef::Pickaxe(self.equipped.pickaxe));
+                self.equipped.pickaxe = pickaxe;
+            }
+            ItemRef::Hat(hat) => {
+                self.items.push(ItemRef::Hat(self.equipped.hat));
+                self.equipped.hat = hat;
+            }
+            ItemRef::Backpack(backpack) => {
+                self.items.push(ItemRef::Backpack(self.equipped.backpack));
+                self.equipped.backpack = backpack;
+            }
+        }
+    }
+
     pub fn collect_winnings(&mut self, winnings: Winnings) {
         self.gold += winnings.gold;
         self.items.extend(winnings.items);
