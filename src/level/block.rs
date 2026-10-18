@@ -104,7 +104,7 @@ struct BlockDef {
 static WALL_1: BlockDef = BlockDef {
     category: BlockCategory::Wall,
     max_health: None,
-    colour: Color::from_rgba(25, 25, 30, 255),
+    colour: Color::from_rgba(50, 50, 50, 255),
     drops: &[],
 };
 

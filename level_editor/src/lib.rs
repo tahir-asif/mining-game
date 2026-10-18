@@ -65,6 +65,9 @@ impl History {
 }
 
 fn put_cell(level: &mut RawLevel, x: u8, z: u8, id: u8) {
+    if x >= level.width || z >= level.height {
+        return;
+    }
     if id != ID_EMPTY && (x, z) == level.spawn {
         return;
     }
@@ -161,32 +164,45 @@ impl LevelEditor {
         }
     }
 
-    fn new_level(&mut self) {
+    fn create_level(&mut self, at: usize) {
         self.history.snapshot(&self.levels);
-        let next_id = self.levels.iter().map(|l| l.id).max().map_or(0, |m| m + 1);
         let (w, h) = (20u8, 15u8);
-        let wid = BlockType::Wall1.id();
-        let mut grid = vec![vec![ID_EMPTY; w as usize]; h as usize];
-        for x in 0..w as usize {
-            grid[0][x] = wid;
-            grid[(h as usize) - 1][x] = wid;
-        }
-        for z in 0..h as usize {
-            grid[z][0] = wid;
-            grid[z][(w as usize) - 1] = wid;
-        }
-        self.levels.push(RawLevel {
-            id: next_id,
+        let level = RawLevel {
             spawn: (1, 1),
             width: w,
             height: h,
             goal: RawGoal::MineAllGold,
-            grid,
+            grid: vec![vec![ID_EMPTY; w as usize]; h as usize],
             chests: vec![],
-        });
-        self.current = self.levels.len() - 1;
+        };
+        self.levels.insert(at, level);
+        self.current = at;
         self.dirty = true;
         self.pan = egui::Vec2::ZERO;
+        self.pending_recenter = true;
+    }
+
+    fn new_level(&mut self) {
+        self.create_level(self.levels.len());
+    }
+
+    fn insert_level_after_current(&mut self) {
+        let at = (self.current + 1).min(self.levels.len());
+        self.create_level(at);
+    }
+
+    fn previous_level(&mut self) {
+        if self.current > 0 {
+            self.current -= 1;
+            self.pending_recenter = true;
+        }
+    }
+
+    fn next_level(&mut self) {
+        if self.current + 1 < self.levels.len() {
+            self.current += 1;
+            self.pending_recenter = true;
+        }
     }
 
     fn resize_level(&mut self, new_w: u8, new_h: u8) {
@@ -460,19 +476,6 @@ impl LevelEditor {
             self.resize_level(new_w, new_h);
         }
 
-        // ID
-        let mut id = self.levels[self.current].id;
-        ui.horizontal(|ui| {
-            ui.label("ID:");
-            if ui
-                .add(egui::DragValue::new(&mut id).range(0..=255u32))
-                .changed()
-            {
-                self.levels[self.current].id = id;
-                self.dirty = true;
-            }
-        });
-
         ui.separator();
 
         // --- Goal ---
@@ -529,9 +532,11 @@ impl LevelEditor {
             let l = &self.levels[self.current];
             (l.width as f32, l.height as f32)
         };
+        let full_w = w + 2.0;
+        let full_h = h + 2.0;
 
         if self.pending_recenter {
-            let grid_size = egui::vec2(w * cell_size, h * cell_size);
+            let grid_size = egui::vec2(full_w * cell_size, full_h * cell_size);
             let inner = viewport.size();
             if grid_size.x <= inner.x && grid_size.y <= inner.y {
                 // Center when it fits
@@ -564,10 +569,11 @@ impl LevelEditor {
         }
 
         let content_origin = viewport.min + self.pan;
+        let interior_origin = content_origin + egui::vec2(cell_size, cell_size);
 
         // --- Hover cell ---
         self.hover_cell = response.hover_pos().and_then(|pos| {
-            let local = pos - content_origin;
+            let local = pos - interior_origin;
             let cx = (local.x / cell_size).floor() as i32;
             let cy = (local.y / cell_size).floor() as i32;
             if cx >= 0 && cy >= 0 && (cx as u32) < w as u32 && (cy as u32) < h as u32 {
@@ -635,16 +641,27 @@ impl LevelEditor {
 
         // --- Draw grid ---
         let level = &self.levels[self.current];
-        for z in 0..level.height {
-            for x in 0..level.width {
+        let wall_color = color_for_id(BlockType::Wall1.id());
+        for bz in 0..(level.height as i32 + 2) {
+            for bx in 0..(level.width as i32 + 2) {
                 let cell_min =
-                    content_origin + egui::vec2(x as f32 * cell_size, z as f32 * cell_size);
+                    content_origin + egui::vec2(bx as f32 * cell_size, bz as f32 * cell_size);
                 let cell_rect =
                     egui::Rect::from_min_size(cell_min, egui::vec2(cell_size, cell_size));
                 if !viewport.intersects(cell_rect) {
                     continue;
                 }
-                let color = self.cell_color(level, x, z);
+                let x = bx - 1;
+                let z = bz - 1;
+                let inside = x >= 0
+                    && z >= 0
+                    && x < level.width as i32
+                    && z < level.height as i32;
+                let color = if inside {
+                    self.cell_color(level, x as u8, z as u8)
+                } else {
+                    wall_color
+                };
                 painter.rect_filled(cell_rect, 0.0, color);
                 painter.rect_stroke(
                     cell_rect,
@@ -657,7 +674,7 @@ impl LevelEditor {
 
         // --- Goal marker ---
         if let RawGoal::Collect { x, z } = level.goal {
-            let cell_min = content_origin + egui::vec2(x as f32 * cell_size, z as f32 * cell_size);
+            let cell_min = interior_origin + egui::vec2(x as f32 * cell_size, z as f32 * cell_size);
             let cell_rect = egui::Rect::from_min_size(cell_min, egui::vec2(cell_size, cell_size));
             if viewport.intersects(cell_rect) {
                 painter.text(
@@ -712,7 +729,7 @@ impl LevelEditor {
                 let preview_color = color(self.selected_brush);
                 for (x, z) in cells {
                     let cell_min =
-                        content_origin + egui::vec2(x as f32 * cell_size, z as f32 * cell_size);
+                        interior_origin + egui::vec2(x as f32 * cell_size, z as f32 * cell_size);
                     let cell_rect =
                         egui::Rect::from_min_size(cell_min, egui::vec2(cell_size, cell_size));
                     if !viewport.intersects(cell_rect) {
@@ -731,7 +748,7 @@ impl LevelEditor {
 
         // --- Hover highlight ---
         if let Some((x, z)) = self.hover_cell {
-            let cell_min = content_origin + egui::vec2(x as f32 * cell_size, z as f32 * cell_size);
+            let cell_min = interior_origin + egui::vec2(x as f32 * cell_size, z as f32 * cell_size);
             let cell_rect = egui::Rect::from_min_size(cell_min, egui::vec2(cell_size, cell_size));
             painter.rect_stroke(
                 cell_rect,
@@ -827,20 +844,38 @@ impl eframe::App for LevelEditor {
         egui::Panel::top("top").resizable(false).show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label("Level:");
+                if ui
+                    .add_enabled(self.current > 0, egui::Button::new("◀"))
+                    .clicked()
+                {
+                    self.previous_level();
+                }
                 if !self.levels.is_empty() {
                     let selected = self.current;
-                    let text = format!("Level {} (id {})", selected, self.levels[selected].id);
+                    let text = format!("Level {}", selected + 1);
                     egui::ComboBox::from_id_salt("level_picker")
                         .selected_text(text)
                         .show_ui(ui, |ui| {
                             for i in 0..self.levels.len() {
-                                let t = format!("Level {} (id {})", i, self.levels[i].id);
+                                let t = format!("Level {}", i + 1);
                                 ui.selectable_value(&mut self.current, i, t);
                             }
                         });
                 }
+                if ui
+                    .add_enabled(
+                        self.current + 1 < self.levels.len(),
+                        egui::Button::new("▶"),
+                    )
+                    .clicked()
+                {
+                    self.next_level();
+                }
                 if ui.button("+ New").clicked() {
                     self.new_level();
+                }
+                if ui.button("+ Insert").clicked() {
+                    self.insert_level_after_current();
                 }
                 if ui.button("Delete").clicked() {
                     self.pending_delete = true;

@@ -37,14 +37,24 @@ impl GameMap {
     }
 
     pub fn draw(&self) {
-        clear_background(SKYBLUE);
+        clear_background(BLACK);
+
+        let width = f32::from(self.width);
+        let height = f32::from(self.height);
+        let centre = vec3(
+            (width - 1.0) * 0.5 * GRID_SIZE,
+            -0.5 * GRID_SIZE,
+            (height - 1.0) * 0.5 * GRID_SIZE,
+        );
+        let half = vec2(width * 0.5 * GRID_SIZE, height * 0.5 * GRID_SIZE);
+        draw_plane(centre, half, None, Color::new(0.12, 0.12, 0.14, 1.0));
 
         for x in 0..self.width {
             for z in 0..self.height {
                 let i = self.index_map(MapCoords::new(x, z));
                 if let Some(block) = &self.map[i] {
                     draw_cube(
-                        vec3(GRID_SIZE * (x as f32), 0.0, GRID_SIZE * (z as f32)),
+                        vec3(GRID_SIZE * x as f32, 0.0, GRID_SIZE * z as f32),
                         vec3(GRID_SIZE * 0.9, GRID_SIZE * 0.9, GRID_SIZE * 0.9),
                         None,
                         block.colour(),
@@ -53,7 +63,6 @@ impl GameMap {
             }
         }
     }
-
     pub fn mine_block(&mut self, coords: MapCoords, mining_power: u16) -> Option<MiningOutcome> {
         let block = self.get_block(coords)?;
         match block.mine(mining_power) {
@@ -72,7 +81,7 @@ impl GameMap {
 
     pub fn is_block(&self, coords: MapCoords) -> bool {
         if self.is_out_of_bounds(coords) {
-            return false;
+            return true;
         }
 
         let i = self.index_map(coords);

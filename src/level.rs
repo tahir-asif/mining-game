@@ -136,19 +136,14 @@ impl Level {
             Direction::Up => (0, 1),
             Direction::Down => (0, -1),
         };
-        let move_to: MapCoords = self.player.get_coords().add((dx, dz));
 
-        // don't move after mining a block
-        // if !self.game_map.is_block(move_to) {
-        //     self.player.move_to(move_to);
-        //     self.camera.point(move_to);
-        // }
+        let mut current = self.player.get_coords();
+        let move_to: MapCoords = current.add((dx, dz));
 
         if do_mine {
             self.mine(move_to);
         }
 
-        // do move after mining a block
         if self.game_map.is_block(move_to) {
             return;
         }

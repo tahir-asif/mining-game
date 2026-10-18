@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RawLevel {
-    pub id: u32,
     pub spawn: (u8, u8),
     pub width: u8,
     pub height: u8,

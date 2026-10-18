@@ -11,7 +11,7 @@ pub fn draw_ui(player: &mut Player) {
 
 fn hud(player: &mut Player, ui: &mut Ui) {
     egui::Frame::new()
-        .fill(egui::Color32::from_black_alpha(180))
+        .fill(egui::Color32::from_gray(70))
         .inner_margin(8.0)
         .corner_radius(4.0)
         .show(ui, |ui| {
