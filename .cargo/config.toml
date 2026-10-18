@@ -1,5 +1,2 @@
 [alias]
 editor = "run --release -p level_editor"
-
-[target.wasm32-unknown-unknown]
-rustflags = ["-C", "link-arg=--allow-undefined"]
