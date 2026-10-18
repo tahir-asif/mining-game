@@ -23,6 +23,7 @@ use crate::{
     },
 };
 
+use egui_macroquad::egui;
 use macroquad::prelude::*;
 use shared::items::get_item;
 
@@ -38,6 +39,7 @@ pub struct Level {
     camera: Camera,
     game_map: GameMap,
     meta_data: &'static LevelData,
+    is_paused: bool,
 }
 
 impl Level {
@@ -59,6 +61,7 @@ impl Level {
             camera,
             game_map,
             meta_data,
+            is_paused: false,
         }
     }
 
@@ -70,19 +73,62 @@ impl Level {
         self.camera.set();
         self.game_map.draw();
         self.player.draw();
-        ui::draw_ui(&mut self.player);
+
         self.debug(debug_toggle, top_down_camera_toggle);
         self.handle_input();
-        if self.is_goal_achieved() {
-            return TransitionState::EndLevel(Outcome::Win(self.calc_winnings()));
+
+        if get_last_key_pressed() == Some(KeyCode::Escape) {
+            self.is_paused = !self.is_paused;
         }
+        if self.is_paused {
+            return self.pause();
+        }
+
+        ui::draw_ui(&mut self.player);
+
         if self.player.energy == 0 {
             return TransitionState::EndLevel(Outcome::Lose);
         }
-        if get_last_key_pressed() == Some(KeyCode::Escape) {
-            return TransitionState::EndLevel(Outcome::Exit);
+        if self.is_goal_achieved() {
+            return TransitionState::EndLevel(Outcome::Win(self.calc_winnings()));
         }
+
         TransitionState::None
+    }
+
+    fn pause(&mut self) -> TransitionState {
+        let mut transition = TransitionState::None;
+
+        egui_macroquad::ui(|ctx| {
+            let frame = egui::Frame::new().fill(egui::Color32::TRANSPARENT);
+
+            egui::CentralPanel::default().frame(frame).show(ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.add_space(screen_height() * 0.25);
+
+                    ui.label(egui::RichText::new("PAUSED").size(64.0));
+                    ui.add_space(20.0);
+
+                    let button_size = egui::vec2(250.0, 50.0);
+
+                    if ui
+                        .add_sized(button_size, egui::Button::new("Resume"))
+                        .clicked()
+                    {
+                        self.is_paused = false;
+                    }
+
+                    if ui
+                        .add_sized(button_size, egui::Button::new("Back to Hub"))
+                        .clicked()
+                    {
+                        transition = TransitionState::EndLevel(Outcome::Exit);
+                    }
+                });
+            });
+        });
+
+        transition
     }
 
     fn is_goal_achieved(&self) -> bool {
