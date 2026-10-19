@@ -29,8 +29,6 @@ fn window_conf() -> Conf {
 #[macroquad::main(window_conf)]
 async fn main() {
     // declare "global" variables; settings
-    let mut debug_toggle = false;
-    let mut top_down_camera_toggle = false;
     let mut game = Game::new();
     let mut is_quit = false;
 
@@ -51,7 +49,7 @@ async fn main() {
             GameState::Settings => settings_update(),
             GameState::LoadSave(state) => load_save_update(state),
             GameState::Hub => game.hub_update(),
-            GameState::Level(level) => level.update(&mut debug_toggle, &mut top_down_camera_toggle),
+            GameState::Level(level) => level.update(),
             GameState::Quit => {
                 is_quit = true;
                 TransitionState::None

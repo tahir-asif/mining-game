@@ -63,6 +63,7 @@ impl GameMap {
             }
         }
     }
+
     pub fn mine_block(&mut self, coords: MapCoords, mining_power: u16) -> Option<MiningOutcome> {
         let block = self.get_block(coords)?;
         match block.mine(mining_power) {
@@ -90,14 +91,6 @@ impl GameMap {
         }
 
         false
-    }
-
-    pub fn get_width(&self) -> usize {
-        usize::from(self.width)
-    }
-
-    pub fn get_height(&self) -> usize {
-        usize::from(self.height)
     }
 
     // helper functions

@@ -1,7 +1,6 @@
 mod block;
 mod camera;
 pub mod coordinate;
-mod debug;
 pub mod levels;
 mod map;
 pub mod outcome;
@@ -46,13 +45,13 @@ impl Level {
     pub fn new(id: LevelId, starting_energy: u16, starting_tech: u16, mining_power: u16) -> Self {
         let meta_data = get_level(id).unwrap_or_else(|| panic!("Level ID {id} does not exist"));
         let mut game_map = GameMap::new(meta_data.width, meta_data.height);
-        let mut player = Player::new(
+        let player = Player::new(
             meta_data.spawn,
             starting_energy,
             starting_tech,
             mining_power,
         );
-        let camera = Camera::new(&mut player);
+        let camera = Camera::new(player.get_coords());
 
         game_map.generate_level(meta_data.block_ids);
 
@@ -65,16 +64,11 @@ impl Level {
         }
     }
 
-    pub fn update(
-        &mut self,
-        debug_toggle: &mut bool,
-        top_down_camera_toggle: &mut bool,
-    ) -> TransitionState {
+    pub fn update(&mut self) -> TransitionState {
         self.camera.set();
         self.game_map.draw();
         self.player.draw();
 
-        self.debug(debug_toggle, top_down_camera_toggle);
         self.handle_input();
 
         if get_last_key_pressed() == Some(KeyCode::Escape) {
@@ -150,16 +144,6 @@ impl Level {
             items,
             latest_completed_level: self.meta_data.id,
         }
-    }
-
-    fn debug(&mut self, debug_toggle: &mut bool, top_down_camera_toggle: &mut bool) {
-        debug::debug_controls(
-            debug_toggle,
-            &mut self.game_map,
-            &mut self.camera,
-            top_down_camera_toggle,
-            &mut self.player,
-        );
     }
 
     fn handle_input(&mut self) {
