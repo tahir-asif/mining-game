@@ -20,6 +20,7 @@ enum Tool {
 }
 
 const SAVED_VISIBLE: Duration = Duration::from_secs(2);
+const DELETE_CONFIRM_TIMEOUT: Duration = Duration::from_secs(2);
 const HISTORY_MAX: usize = 50;
 
 struct History {
@@ -74,6 +75,23 @@ fn put_cell(level: &mut RawLevel, x: u8, z: u8, id: u8) {
     level.grid[z as usize][x as usize] = id;
 }
 
+fn count_gold(level: &RawLevel) -> u16 {
+    let gold = BlockType::GoldOre1.id();
+    level
+        .grid
+        .iter()
+        .flatten()
+        .filter(|&&id| id == gold)
+        .count() as u16
+}
+
+fn sync_gold_count(level: &mut RawLevel) {
+    let count = count_gold(level);
+    if let RawGoal::MineAllGold(gold_blocks) = &mut level.goal {
+        *gold_blocks = count;
+    }
+}
+
 pub struct LevelEditor {
     levels: Vec<RawLevel>,
     levels_path: PathBuf,
@@ -100,7 +118,7 @@ pub struct LevelEditor {
 
     // Status / save / delete
     saved_at: Option<Instant>,
-    pending_delete: bool,
+    pending_delete_at: Option<Instant>,
 
     history: History,
 }
@@ -137,12 +155,15 @@ impl LevelEditor {
             pending_chest: None,
             pending_chest_item: ITEMS.first().map_or(0, |entry| entry.id),
             saved_at: None,
-            pending_delete: false,
+            pending_delete_at: None,
             history: History::new(),
         }
     }
 
     fn save(&mut self) {
+        for level in &mut self.levels {
+            sync_gold_count(level);
+        }
         let config = ron::ser::PrettyConfig::new()
             .separate_tuple_members(false) // Collect(x: 3, z: 3) on one line
             .depth_limit(3);
@@ -167,12 +188,14 @@ impl LevelEditor {
     fn create_level(&mut self, at: usize) {
         self.history.snapshot(&self.levels);
         let (w, h) = (20u8, 15u8);
+        let mut grid = vec![vec![ID_EMPTY; w as usize]; h as usize];
+        grid[2][2] = BlockType::EnergyCrystal1.id();
         let level = RawLevel {
             spawn: (1, 1),
             width: w,
             height: h,
-            goal: RawGoal::MineAllGold,
-            grid: vec![vec![ID_EMPTY; w as usize]; h as usize],
+            goal: RawGoal::Collect { x: 2, z: 2 },
+            grid,
             chests: vec![],
         };
         self.levels.insert(at, level);
@@ -180,6 +203,8 @@ impl LevelEditor {
         self.dirty = true;
         self.pan = egui::Vec2::ZERO;
         self.pending_recenter = true;
+        self.pending_delete_at = None;
+        self.goal_pick_mode = false;
     }
 
     fn new_level(&mut self) {
@@ -191,10 +216,15 @@ impl LevelEditor {
         self.create_level(at);
     }
 
+    fn insert_level_before_current(&mut self) {
+        self.create_level(self.current);
+    }
+
     fn previous_level(&mut self) {
         if self.current > 0 {
             self.current -= 1;
             self.pending_recenter = true;
+            self.pending_delete_at = None;
         }
     }
 
@@ -202,6 +232,7 @@ impl LevelEditor {
         if self.current + 1 < self.levels.len() {
             self.current += 1;
             self.pending_recenter = true;
+            self.pending_delete_at = None;
         }
     }
 
@@ -242,7 +273,7 @@ impl LevelEditor {
         self.levels.remove(self.current);
         self.current = self.current.min(self.levels.len() - 1);
         self.dirty = true;
-        self.pending_delete = false;
+        self.pending_delete_at = None;
     }
 
     fn cell_color(&self, level: &RawLevel, x: u8, z: u8) -> egui::Color32 {
@@ -466,7 +497,8 @@ impl LevelEditor {
                 self.dirty = true;
             }
             if ui.radio(!is_collect, "Mine All Gold").clicked() && is_collect {
-                self.levels[self.current].goal = RawGoal::MineAllGold;
+                let gold_blocks = count_gold(&self.levels[self.current]);
+                self.levels[self.current].goal = RawGoal::MineAllGold(gold_blocks);
                 self.goal_pick_mode = false;
                 self.dirty = true;
             }
@@ -841,6 +873,17 @@ impl eframe::App for LevelEditor {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
 
+        if let Some(at) = self.pending_delete_at {
+            let elapsed = at.elapsed();
+            if elapsed >= DELETE_CONFIRM_TIMEOUT {
+                self.pending_delete_at = None;
+            } else {
+                ctx.request_repaint_after(DELETE_CONFIRM_TIMEOUT - elapsed);
+            }
+        }
+
+        let mut delete_clicked = false;
+
         // Reduce CPU: no feathering on shape edges.
         ctx.tessellation_options_mut(|opt| {
             opt.feathering = false;
@@ -884,8 +927,8 @@ impl eframe::App for LevelEditor {
                     self.previous_level();
                 }
                 if !self.levels.is_empty() {
-                    let selected = self.current;
-                    let text = format!("Level {}", selected + 1);
+                    let previous = self.current;
+                    let text = format!("Level {}", previous + 1);
                     egui::ComboBox::from_id_salt("level_picker")
                         .selected_text(text)
                         .show_ui(ui, |ui| {
@@ -894,6 +937,10 @@ impl eframe::App for LevelEditor {
                                 ui.selectable_value(&mut self.current, i, t);
                             }
                         });
+                    if self.current != previous {
+                        self.pending_recenter = true;
+                        self.pending_delete_at = None;
+                    }
                 }
                 if ui
                     .add_enabled(
@@ -907,11 +954,29 @@ impl eframe::App for LevelEditor {
                 if ui.button("+ New").clicked() {
                     self.new_level();
                 }
-                if ui.button("+ Insert").clicked() {
+                if ui.button("+ Insert Before").clicked() {
+                    self.insert_level_before_current();
+                }
+                if ui.button("+ Insert After").clicked() {
                     self.insert_level_after_current();
                 }
-                if ui.button("Delete").clicked() {
-                    self.pending_delete = true;
+
+                ui.add_space(6.0);
+                ui.separator();
+                ui.add_space(6.0);
+
+                delete_clicked = ui
+                    .add_enabled(self.levels.len() > 1, egui::Button::new("Delete"))
+                    .clicked();
+                if delete_clicked {
+                    if self.pending_delete_at.is_some() {
+                        self.delete_level();
+                    } else {
+                        self.pending_delete_at = Some(Instant::now());
+                    }
+                }
+                if self.pending_delete_at.is_some() {
+                    ui.colored_label(egui::Color32::RED, "Are you sure?");
                 }
 
                 ui.add_space(6.0);
@@ -991,27 +1056,11 @@ impl eframe::App for LevelEditor {
 
         self.show_chest_window(&ctx);
 
-        if self.pending_delete {
-            let mut open = true;
-            egui::Window::new("Delete level?")
-                .id(egui::Id::new("delete_confirm"))
-                .collapsible(false)
-                .resizable(false)
-                .open(&mut open)
-                .show(&ctx, |ui| {
-                    ui.label("This can be undone with Ctrl+Z.");
-                    ui.horizontal(|ui| {
-                        if ui.button("Delete").clicked() {
-                            self.delete_level();
-                        }
-                        if ui.button("Cancel").clicked() {
-                            self.pending_delete = false;
-                        }
-                    });
-                });
-            if !open {
-                self.pending_delete = false;
-            }
+        if self.pending_delete_at.is_some()
+            && !delete_clicked
+            && ctx.input(|i| i.pointer.any_click())
+        {
+            self.pending_delete_at = None;
         }
     }
 }

@@ -38,21 +38,23 @@ impl Player {
         self.energy -= 1;
     }
 
-    pub fn collect_drops(&mut self, drops: &'static [Drop]) -> bool {
+    pub fn collect_drops(&mut self, drops: &'static [Drop]) -> Option<DropKind> {
         for drop in drops {
             match drop.kind {
                 DropKind::Energy => {
                     self.energy += drop.amount;
+                    return Some(DropKind::Energy);
                 }
                 DropKind::Gold => {
                     self.collected_gold += drop.amount;
+                    return Some(DropKind::Gold);
                 }
                 DropKind::Item => {
-                    return true;
+                    return Some(DropKind::Item);
                 }
             }
         }
-        false
+        None
     }
 
     pub fn draw(&mut self) {

@@ -1,6 +1,7 @@
 use macroquad::prelude::*;
 use shared::BlockType;
 
+#[derive(PartialEq)]
 pub enum DropKind {
     Gold,
     Energy,

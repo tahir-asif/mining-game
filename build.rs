@@ -75,6 +75,21 @@ fn validate(levels: &[shared::RawLevel]) {
                 panic!("level {index}: chest ({x}, {z}) has unknown item id {item}");
             }
         }
+
+        if let shared::RawGoal::MineAllGold(gold_blocks) = level.goal {
+            let gold = shared::BlockType::GoldOre1.id();
+            let actual = level
+                .grid
+                .iter()
+                .flatten()
+                .filter(|&&id| id == gold)
+                .count();
+            if usize::from(gold_blocks) != actual {
+                panic!(
+                    "level {index}: MineAllGold count {gold_blocks} does not match {actual} gold blocks"
+                );
+            }
+        }
     }
 }
 
@@ -126,6 +141,8 @@ fn goal_to_rust(g: &shared::RawGoal) -> String {
         shared::RawGoal::Collect { x, z } => {
             format!("Goal::Collect(MapCoords {{ x: {x}, z: {z} }})")
         }
-        shared::RawGoal::MineAllGold => "Goal::MineAllGold".to_string(),
+        shared::RawGoal::MineAllGold(gold_blocks) => {
+            format!("Goal::MineAllGold({gold_blocks})")
+        }
     }
 }

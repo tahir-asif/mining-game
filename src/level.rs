@@ -11,7 +11,7 @@ pub mod winnings;
 use crate::{
     game::TransitionState,
     level::{
-        block::MiningOutcome,
+        block::{DropKind, MiningOutcome},
         camera::Camera,
         coordinate::MapCoords,
         levels::{Goal, LevelData, LevelId, get_level},
@@ -38,7 +38,9 @@ pub struct Level {
     camera: Camera,
     game_map: GameMap,
     meta_data: &'static LevelData,
+    // data that is set at initilization
     is_paused: bool,
+    gold_blocks_mined: u16,
 }
 
 impl Level {
@@ -60,7 +62,9 @@ impl Level {
             camera,
             game_map,
             meta_data,
+            // data that is set at initilization
             is_paused: false,
+            gold_blocks_mined: 0,
         }
     }
 
@@ -69,8 +73,6 @@ impl Level {
         self.game_map.draw();
         self.player.draw();
 
-        self.handle_input();
-
         if get_last_key_pressed() == Some(KeyCode::Escape) {
             self.is_paused = !self.is_paused;
         }
@@ -78,23 +80,82 @@ impl Level {
             return self.pause();
         }
 
-        ui::draw_ui(&mut self.player, self.meta_data.goal);
-
         if self.player.energy == 0 {
-            return TransitionState::EndLevel(Outcome::Lose);
+            return self.loss_screen();
         }
         if self.is_goal_achieved() {
-            return TransitionState::EndLevel(Outcome::Win(self.calc_winnings()));
+            return self.win_screen();
         }
 
+        self.handle_input();
+        ui::draw_ui(&mut self.player, self.meta_data.goal);
         TransitionState::None
+    }
+
+    fn loss_screen(&mut self) -> TransitionState {
+        let mut transition = TransitionState::None;
+
+        egui_macroquad::ui(|ctx| {
+            let fill_colour = egui::Color32::from_rgb(255, 0, 0).gamma_multiply(0.2);
+            let frame = egui::Frame::new().fill(fill_colour);
+
+            egui::CentralPanel::default().frame(frame).show(ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.add_space(screen_height() * 0.25);
+
+                    ui.label(egui::RichText::new("DEFEAT").size(64.0));
+                    ui.add_space(20.0);
+
+                    let button_size = egui::vec2(250.0, 50.0);
+
+                    if ui
+                        .add_sized(button_size, egui::Button::new("Hub"))
+                        .clicked()
+                    {
+                        transition = TransitionState::EndLevel(Outcome::Lose);
+                    }
+                });
+            });
+        });
+
+        transition
+    }
+
+    fn win_screen(&mut self) -> TransitionState {
+        let mut transition = TransitionState::None;
+
+        egui_macroquad::ui(|ctx| {
+            let fill_colour = egui::Color32::from_rgb(0, 255, 0).gamma_multiply(0.2);
+            let frame = egui::Frame::new().fill(fill_colour);
+
+            egui::CentralPanel::default().frame(frame).show(ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.add_space(screen_height() * 0.25);
+
+                    ui.label(egui::RichText::new("VICTORY!").size(64.0));
+                    ui.add_space(20.0);
+
+                    let button_size = egui::vec2(250.0, 50.0);
+
+                    if ui
+                        .add_sized(button_size, egui::Button::new("Hub"))
+                        .clicked()
+                    {
+                        transition = TransitionState::EndLevel(Outcome::Win(self.calc_winnings()));
+                    }
+                });
+            });
+        });
+
+        transition
     }
 
     fn pause(&mut self) -> TransitionState {
         let mut transition = TransitionState::None;
 
         egui_macroquad::ui(|ctx| {
-            let frame = egui::Frame::new().fill(egui::Color32::TRANSPARENT);
+            let fill_colour = egui::Color32::from_rgb(60, 60, 60).gamma_multiply(0.7);
+            let frame = egui::Frame::new().fill(fill_colour);
 
             egui::CentralPanel::default().frame(frame).show(ctx, |ui| {
                 ui.vertical_centered(|ui| {
@@ -128,7 +189,7 @@ impl Level {
     fn is_goal_achieved(&self) -> bool {
         match self.meta_data.goal {
             Goal::Collect(coords) => self.player.get_coords() == coords,
-            Goal::MineAllGold => false,
+            Goal::MineAllGold(total) => self.gold_blocks_mined == total,
         }
     }
 
@@ -190,16 +251,23 @@ impl Level {
             Some(MiningOutcome::Damaged) => self.player.spend_energy(),
             Some(MiningOutcome::Destroyed) => self.player.spend_energy(),
             Some(MiningOutcome::Gained(drops)) => {
-                let chest_loot = self.player.collect_drops(drops);
-                if chest_loot {
-                    let chest_loot = self
-                        .meta_data
-                        .chests
-                        .iter()
-                        .find(|(coord, _)| *coord == block)
-                        .map(|(_, id)| id);
-                    if let Some(loot) = chest_loot {
-                        self.player.collected_items.push(*loot);
+                if let Some(drop_kind) = self.player.collect_drops(drops) {
+                    match drop_kind {
+                        DropKind::Gold => {
+                            self.gold_blocks_mined += 1;
+                        }
+                        DropKind::Item => {
+                            let chest_loot = self
+                                .meta_data
+                                .chests
+                                .iter()
+                                .find(|(coord, _)| *coord == block)
+                                .map(|(_, id)| id);
+                            if let Some(loot) = chest_loot {
+                                self.player.collected_items.push(*loot);
+                            }
+                        }
+                        DropKind::Energy => {}
                     }
                 }
             }

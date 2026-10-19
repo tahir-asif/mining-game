@@ -20,14 +20,14 @@ pub fn get_level(id: LevelId) -> Option<&'static LevelData> {
 #[derive(Clone, Copy)]
 pub enum Goal {
     Collect(MapCoords),
-    MineAllGold,
+    MineAllGold(u16),
 }
 
 impl Goal {
     pub const fn to_str(self) -> &'static str {
         match self {
             Goal::Collect(_) => "!  Collect an item",
-            Goal::MineAllGold => "!  Mine all gold",
+            Goal::MineAllGold(_) => "!  Mine all gold",
         }
     }
 }

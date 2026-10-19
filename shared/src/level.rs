@@ -14,7 +14,7 @@ pub struct RawLevel {
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 pub enum RawGoal {
     Collect { x: u8, z: u8 },
-    MineAllGold,
+    MineAllGold(u16),
 }
 
 pub type BlockId = u8;
