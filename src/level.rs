@@ -78,7 +78,7 @@ impl Level {
             return self.pause();
         }
 
-        ui::draw_ui(&mut self.player);
+        ui::draw_ui(&mut self.player, self.meta_data.goal);
 
         if self.player.energy == 0 {
             return TransitionState::EndLevel(Outcome::Lose);

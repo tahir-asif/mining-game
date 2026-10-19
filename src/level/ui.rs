@@ -1,15 +1,32 @@
-use crate::level::player::Player;
+use crate::level::{levels::Goal, player::Player};
 
 use egui_macroquad::egui::{self, Align2, Ui};
-pub fn draw_ui(player: &mut Player) {
+pub fn draw_ui(player: &mut Player, goal: Goal) {
     egui_macroquad::ui(|ctx| {
-        egui::Area::new("HUD_stats".into())
+        egui::Area::new("hud_top_left".into())
             .anchor(Align2::LEFT_TOP, egui::vec2(10.0, 10.0))
-            .show(ctx, |ui| hud(player, ui));
+            .show(ctx, |ui| {
+                hud_top_left(ui, player);
+            });
+        egui::Area::new("hud_top_right".into())
+            .anchor(Align2::RIGHT_TOP, egui::vec2(-10.0, 10.0))
+            .show(ctx, |ui| {
+                hud_top_right(ui, goal);
+            });
     });
 }
 
-fn hud(player: &mut Player, ui: &mut Ui) {
+fn hud_top_right(ui: &mut Ui, goal: Goal) {
+    egui::Frame::new()
+        .fill(egui::Color32::from_gray(70))
+        .inner_margin(8.0)
+        .corner_radius(4.0)
+        .show(ui, |ui| {
+            ui.label(goal.to_str());
+        });
+}
+
+fn hud_top_left(ui: &mut Ui, player: &mut Player) {
     egui::Frame::new()
         .fill(egui::Color32::from_gray(70))
         .inner_margin(8.0)
