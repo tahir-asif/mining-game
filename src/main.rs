@@ -3,6 +3,7 @@ mod game;
 mod hub;
 mod level;
 mod main_menu;
+mod profile;
 mod save;
 mod styles;
 

@@ -2,7 +2,7 @@ use crate::{
     hub::Hub,
     level::{Level, levels::LevelId, outcome::Outcome},
     main_menu::LoadSaveState,
-    save::Profile,
+    profile::Profile,
 };
 
 pub enum GameState {
@@ -17,7 +17,7 @@ pub enum GameState {
 pub enum TransitionState {
     None,
     GoTo(GameState),
-    LoadProfile { slot: usize, name: String },
+    LoadProfile { slot: u8, name: String },
     StartLevel(LevelId),
     EndLevel(Outcome),
     Quit,
@@ -46,11 +46,28 @@ impl Game {
     pub fn set_state(&mut self, to_state: TransitionState) {
         match to_state {
             TransitionState::None => {}
-            TransitionState::GoTo(to) => self.state = to,
-            TransitionState::LoadProfile { slot: s, name: n } => self.load_profile(s, n),
+            TransitionState::GoTo(to) => self.verify_goto(to),
+            TransitionState::LoadProfile { slot, name } => self.load_profile(slot, name),
             TransitionState::StartLevel(id) => self.start_level(id),
             TransitionState::EndLevel(result) => self.end_level(result),
-            TransitionState::Quit => self.state = GameState::Quit,
+            TransitionState::Quit => {
+                self.persist_profile();
+                self.state = GameState::Quit;
+            }
+        }
+    }
+
+    fn verify_goto(&mut self, to: GameState) {
+        match to {
+            GameState::Settings => self.state = GameState::Settings,
+            GameState::LoadSave(data) => self.state = GameState::LoadSave(data),
+            GameState::MainMenu => {
+                self.persist_profile();
+                self.profile = None;
+                self.hub = None;
+                self.state = GameState::MainMenu
+            }
+            _ => {}
         }
     }
 
@@ -59,12 +76,28 @@ impl Game {
         self.profile.as_mut().expect("Profile does not exist.")
     }
 
-    fn load_profile(&mut self, slot: usize, name: String) {
-        if self.profile.is_none() {
-            self.profile = Some(Profile::new(name, slot))
+    fn load_profile(&mut self, slot: u8, name: String) {
+        if self.profile.is_some() {
+            return;
         }
+        self.profile = Some(match crate::save::load_profile(slot) {
+            Ok(Some(p)) => p,
+            Ok(None) => Profile::new(name, slot),
+            Err(e) => {
+                macroquad::prelude::error!("failed to load slot {}: {}", slot, e);
+                Profile::new(name, slot)
+            }
+        });
         self.state = GameState::Hub;
         self.hub = Some(Hub::new());
+    }
+
+    pub fn persist_profile(&self) {
+        if let Some(profile) = &self.profile {
+            if let Err(e) = crate::save::save_profile(profile) {
+                macroquad::prelude::error!("failed to save profile: {}", e);
+            }
+        }
     }
 
     // Hub
@@ -94,6 +127,7 @@ impl Game {
             Outcome::Lose => {}
             Outcome::Exit => {}
         }
+        self.persist_profile();
         self.state = GameState::Hub;
     }
 }

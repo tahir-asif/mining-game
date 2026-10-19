@@ -40,24 +40,20 @@ impl ItemRef {
         }
     }
 
+    pub fn id(self) -> ItemId {
+        ITEMS
+            .iter()
+            .find(|entry| entry.item.same_item(self))
+            .map(|entry| entry.id)
+            .expect("ItemRef is not registered in ITEMS")
+    }
+
     pub fn kind(self) -> ItemKind {
         match self {
             ItemRef::Pickaxe(_) => ItemKind::Pickaxe,
             ItemRef::Hat(_) => ItemKind::Hat,
             ItemRef::Backpack(_) => ItemKind::Backpack,
         }
-    }
-
-    pub fn is_pickaxe(self) -> bool {
-        matches!(self, ItemRef::Pickaxe(_))
-    }
-
-    pub fn is_hat(self) -> bool {
-        matches!(self, ItemRef::Hat(_))
-    }
-
-    pub fn is_backpack(self) -> bool {
-        matches!(self, ItemRef::Backpack(_))
     }
 
     pub fn price(self) -> u16 {
@@ -75,6 +71,18 @@ impl ItemRef {
             (ItemRef::Backpack(a), ItemRef::Backpack(b)) => std::ptr::eq(a, b),
             _ => false,
         }
+    }
+
+    pub fn is_pickaxe(self) -> bool {
+        matches!(self, ItemRef::Pickaxe(_))
+    }
+
+    pub fn is_hat(self) -> bool {
+        matches!(self, ItemRef::Hat(_))
+    }
+
+    pub fn is_backpack(self) -> bool {
+        matches!(self, ItemRef::Backpack(_))
     }
 
     pub fn pickaxe(self) -> Option<&'static Pickaxe> {
@@ -110,7 +118,7 @@ pub struct ItemEntry {
 
 #[rustfmt::skip]
 pub const ITEMS: &[ItemEntry] = &[
-    ItemEntry { id: 0, item: ItemRef::Pickaxe(&STARTING_PICK) },
+    ItemEntry { id: 0, item: ItemRef::Pickaxe(&STARTING_PICKAXE) },
     ItemEntry { id: 1, item: ItemRef::Hat(&STARTING_HAT) },
     ItemEntry { id: 2, item: ItemRef::Backpack(&STARTING_BACKPACK) },
     ItemEntry { id: 3, item: ItemRef::Pickaxe(&IRON_PICK) },
@@ -127,7 +135,7 @@ pub fn get_item(id: ItemId) -> Option<ItemRef> {
 
 // Definintions below
 
-pub static STARTING_PICK: Pickaxe = Pickaxe {
+pub static STARTING_PICKAXE: Pickaxe = Pickaxe {
     name: "Starting Pick",
     price: 1,
     mining_power: 1,

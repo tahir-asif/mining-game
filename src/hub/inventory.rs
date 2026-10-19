@@ -1,6 +1,6 @@
 use egui_macroquad::egui::{self, Ui};
 
-use crate::{save::Profile, styles::header_text};
+use crate::{profile::Profile, styles::header_text};
 
 const GRID_SPACING: f32 = 8.0;
 const TARGET_GRID_SIZE: f32 = 120.0;

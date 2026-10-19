@@ -1,85 +1,98 @@
-use crate::level::winnings::Winnings;
-use shared::items::{Backpack, Hat, ItemRef, Pickaxe};
-use std::cmp;
+use crate::profile::{Equipped, Profile};
+use serde::{Deserialize, Serialize};
+use shared::items::{self, ItemId, ItemRef};
 
-pub struct Equipped {
-    pub pickaxe: &'static Pickaxe,
-    pub hat: &'static Hat,
-    pub backpack: &'static Backpack,
+const SLOT_KEY_PREFIX: &str = "save_slot_";
+
+fn slot_key(slot: u8) -> String {
+    format!("{}{}", SLOT_KEY_PREFIX, slot)
 }
 
-pub struct Profile {
-    pub name: String,
-    pub slot: usize,
-    pub gold: u16,
-    pub items: Vec<ItemRef>,
-    pub equipped: Equipped,
-    pub latest_completed_level: u8,
+#[derive(Serialize, Deserialize)]
+struct SavedEquipped {
+    pickaxe: ItemId,
+    hat: ItemId,
+    backpack: ItemId,
 }
 
-impl Profile {
-    pub const fn new(name: String, slot: usize) -> Self {
-        Profile {
-            name,
-            slot,
-            gold: 0,
-            items: vec![],
-            equipped: Equipped {
-                pickaxe: &shared::STARTING_PICK,
-                hat: &shared::STARTING_HAT,
-                backpack: &shared::STARTING_BACKPACK,
+#[derive(Serialize, Deserialize)]
+struct SavedProfile {
+    name: String,
+    slot: u8,
+    gold: u16,
+    items: Vec<ItemId>,
+    equipped: SavedEquipped,
+    #[serde(default)]
+    latest_completed_level: u8,
+}
+
+impl From<&Profile> for SavedProfile {
+    fn from(p: &Profile) -> Self {
+        Self {
+            name: p.name.clone(),
+            slot: p.slot,
+            gold: p.gold,
+            items: p.items.iter().map(|i| i.id()).collect(),
+            equipped: SavedEquipped {
+                pickaxe: ItemRef::Pickaxe(p.equipped.pickaxe).id(),
+                hat: ItemRef::Hat(p.equipped.hat).id(),
+                backpack: ItemRef::Backpack(p.equipped.backpack).id(),
             },
-            latest_completed_level: 0,
+            latest_completed_level: p.latest_completed_level,
         }
     }
+}
 
-    pub fn starting_energy(&self) -> u16 {
-        self.equipped.hat.starting_energy
+impl TryFrom<SavedProfile> for Profile {
+    type Error = String;
+
+    fn try_from(s: SavedProfile) -> Result<Self, Self::Error> {
+        let equipped = Equipped {
+            pickaxe: items::get_item(s.equipped.pickaxe)
+                .and_then(|i| i.pickaxe())
+                .ok_or("Invalid pickaxe ID in save file")?,
+            hat: items::get_item(s.equipped.hat)
+                .and_then(|i| i.hat())
+                .ok_or("Invalid hat ID in save file")?,
+            backpack: items::get_item(s.equipped.backpack)
+                .and_then(|i| i.backpack())
+                .ok_or("Invalid backpack ID in save file")?,
+        };
+
+        let items = s.items.into_iter().filter_map(items::get_item).collect();
+
+        Ok(Profile {
+            name: s.name,
+            slot: s.slot,
+            gold: s.gold,
+            items,
+            equipped,
+            latest_completed_level: s.latest_completed_level,
+        })
     }
+}
 
-    pub fn starting_tech(&self) -> u16 {
-        self.equipped.backpack.starting_tech
-    }
+pub fn save_profile(profile: &Profile) -> Result<(), String> {
+    let saved = SavedProfile::from(profile);
+    let json = serde_json::to_string(&saved).map_err(|e| e.to_string())?;
+    let mut storage = quad_storage::STORAGE.lock().unwrap();
+    storage.set(&slot_key(profile.slot), &json);
+    Ok(())
+}
 
-    pub fn get_mining_power(&self) -> u16 {
-        self.equipped.pickaxe.mining_power
-    }
+pub fn delete_profile(slot: u8) {
+    let mut storage = quad_storage::STORAGE.lock().unwrap();
+    storage.remove(&slot_key(slot.into()));
+}
 
-    pub fn equip(&mut self, item: ItemRef) {
-        self.remove_item(item);
+pub fn load_profile(slot: u8) -> Result<Option<Profile>, String> {
+    let storage = quad_storage::STORAGE.lock().unwrap();
+    let Some(json) = storage.get(&slot_key(slot.into())) else {
+        return Ok(None);
+    };
 
-        match item {
-            ItemRef::Pickaxe(pickaxe) => {
-                self.items.push(ItemRef::Pickaxe(self.equipped.pickaxe));
-                self.equipped.pickaxe = pickaxe;
-            }
-            ItemRef::Hat(hat) => {
-                self.items.push(ItemRef::Hat(self.equipped.hat));
-                self.equipped.hat = hat;
-            }
-            ItemRef::Backpack(backpack) => {
-                self.items.push(ItemRef::Backpack(self.equipped.backpack));
-                self.equipped.backpack = backpack;
-            }
-        }
-    }
-
-    pub fn sell(&mut self, item: ItemRef) {
-        self.remove_item(item);
-
-        self.gold += item.price();
-    }
-
-    fn remove_item(&mut self, item: ItemRef) {
-        if let Some(index) = self.items.iter().position(|&i| i.same_item(item)) {
-            self.items.remove(index);
-        }
-    }
-
-    pub fn collect_winnings(&mut self, winnings: Winnings) {
-        self.gold += winnings.gold;
-        self.items.extend(winnings.items);
-        self.latest_completed_level =
-            cmp::max(winnings.latest_completed_level, self.latest_completed_level);
-    }
+    let saved: SavedProfile = serde_json::from_str(&json).map_err(|e| e.to_string())?;
+    Profile::try_from(saved)
+        .map(Some)
+        .map_err(|e| format!("slot {}: {}", slot, e))
 }

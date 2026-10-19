@@ -1,18 +1,18 @@
-mod crafting;
+mod forge;
 mod inventory;
 
 use crate::{
     game::{GameState, TransitionState},
-    hub::{crafting::draw_crafting, inventory::draw_inventory},
+    hub::{forge::draw_forge, inventory::draw_inventory},
     level::levels::LEVELS,
-    save::Profile,
+    profile::Profile,
     styles::small_text,
 };
 use egui_macroquad::egui::{self, Align, Color32, Layout, Ui};
 
 enum CenterPanelState {
     Inventory,
-    Crafting,
+    Forge,
 }
 
 pub struct Hub {
@@ -54,7 +54,7 @@ impl Hub {
             egui::CentralPanel::default().frame(frame).show(ctx, |ui| {
                 match self.center_panel_state {
                     CenterPanelState::Inventory => draw_inventory(ui, profile),
-                    CenterPanelState::Crafting => draw_crafting(ui),
+                    CenterPanelState::Forge => draw_forge(ui),
                 }
             });
         });
@@ -82,8 +82,8 @@ impl Hub {
             if ui.button("Inventory").clicked() {
                 self.center_panel_state = CenterPanelState::Inventory;
             }
-            if ui.button("Crafting").clicked() {
-                self.center_panel_state = CenterPanelState::Crafting;
+            if ui.button("Forge").clicked() {
+                self.center_panel_state = CenterPanelState::Forge;
             }
             ui.add_space(20.0);
             ui.vertical(|ui| {
