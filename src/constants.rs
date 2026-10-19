@@ -1,5 +1,6 @@
 pub const GRID_SIZE: f32 = 100.0;
-pub const CAM_DISTANCE: isize = 5;
+pub const CAM_DIST_HORIZONTAL: isize = 3;
+pub const CAM_DIST_VERTICAL: isize = 8;
 pub const WINDOW_WIDTH_INT: i32 = 960;
 pub const WINDOW_HEIGHT_INT: i32 = 540;
 // pub const WINDOW_WIDTH_FLOAT: f32 = WINDOW_WIDTH_INT as f32;

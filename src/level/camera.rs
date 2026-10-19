@@ -1,4 +1,4 @@
-use crate::constants::{CAM_DISTANCE, GRID_SIZE};
+use crate::constants::{CAM_DIST_HORIZONTAL, CAM_DIST_VERTICAL, GRID_SIZE};
 use crate::level::coordinate::{CameraCoords, MapCoords};
 
 use macroquad::prelude::*;
@@ -22,15 +22,15 @@ impl Camera {
     }
 
     fn reset(&mut self, player_coords: MapCoords) {
-        self.pos = CameraCoords::new(0, CAM_DISTANCE, 0);
+        self.pos = CameraCoords::new(0, CAM_DIST_VERTICAL, 0);
         self.up = CameraCoords::new(0, 1, 0);
         self.tar = CameraCoords::new(0, 0, 0);
         self.point(player_coords);
     }
 
     pub fn point(&mut self, coords: MapCoords) {
-        self.pos.x = (-CAM_DISTANCE).saturating_add_unsigned(usize::from(coords.x));
-        self.pos.z = (-CAM_DISTANCE).saturating_add_unsigned(usize::from(coords.z));
+        self.pos.x = (-CAM_DIST_HORIZONTAL).saturating_add_unsigned(usize::from(coords.x));
+        self.pos.z = (-CAM_DIST_HORIZONTAL).saturating_add_unsigned(usize::from(coords.z));
         self.tar.x = isize::from(coords.x);
         self.tar.z = isize::from(coords.z);
     }
