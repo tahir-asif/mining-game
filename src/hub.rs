@@ -1,14 +1,27 @@
 mod forge;
 mod inventory;
+mod slot;
 
 use crate::{
     game::{GameState, TransitionState},
-    hub::{forge::draw_forge, inventory::draw_inventory},
+    hub::{forge::Forge, inventory::draw_inventory},
     level::levels::LEVELS,
     profile::Profile,
     styles::small_text,
 };
 use egui_macroquad::egui::{self, Align, Color32, Layout, Ui};
+
+const GRID_SPACING: f32 = 8.0;
+const TARGET_GRID_SIZE: f32 = 120.0;
+const TOOLBAR_HEIGHT: f32 = 80.0;
+
+#[derive(PartialEq, Clone, Copy)]
+enum Filter {
+    All,
+    Pickaxes,
+    Hats,
+    Backpacks,
+}
 
 enum CenterPanelState {
     Inventory,
@@ -17,12 +30,14 @@ enum CenterPanelState {
 
 pub struct Hub {
     center_panel_state: CenterPanelState,
+    forge: Forge,
 }
 
 impl Hub {
     pub const fn new() -> Self {
         Hub {
             center_panel_state: CenterPanelState::Inventory,
+            forge: Forge::new(),
         }
     }
 
@@ -31,9 +46,9 @@ impl Hub {
         let fill_colour = Color32::from_rgb(95, 0, 223);
 
         egui_macroquad::ui(|ctx| {
-            let frame = egui::Frame::new().fill(fill_colour).inner_margin(10.0);
+            let frame = egui::Frame::new().fill(fill_colour).inner_margin(15.0);
 
-            let panel_width = ctx.screen_rect().width() * 0.20;
+            let panel_width = 200.0;
             egui::SidePanel::left("SideBar")
                 .frame(frame.fill(fill_colour.linear_multiply(0.1)))
                 .exact_width(panel_width)
@@ -42,7 +57,7 @@ impl Hub {
                     self.draw_left_sidebar(ui, profile, &mut transition)
                 });
 
-            let panel_width = ctx.screen_rect().width() * 0.10;
+            let panel_width = 100.0;
             egui::SidePanel::right("Levels")
                 .frame(frame.fill(fill_colour.linear_multiply(0.1)))
                 .exact_width(panel_width)
@@ -54,7 +69,7 @@ impl Hub {
             egui::CentralPanel::default().frame(frame).show(ctx, |ui| {
                 match self.center_panel_state {
                     CenterPanelState::Inventory => draw_inventory(ui, profile),
-                    CenterPanelState::Forge => draw_forge(ui),
+                    CenterPanelState::Forge => self.forge.draw_forge(ui, profile),
                 }
             });
         });
@@ -74,18 +89,19 @@ impl Hub {
 
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     let label = format!("{}", profile.gold);
-                    ui.label(small_text(&label));
+                    ui.label(small_text(&label).color(egui::Color32::GOLD));
                 });
             });
 
-            ui.add_space(20.0);
+            ui.add_space(40.0);
             if ui.button("Inventory").clicked() {
                 self.center_panel_state = CenterPanelState::Inventory;
             }
+            ui.add_space(15.0);
             if ui.button("Forge").clicked() {
                 self.center_panel_state = CenterPanelState::Forge;
             }
-            ui.add_space(20.0);
+            ui.add_space(40.0);
             ui.vertical(|ui| {
                 ui.label("Equipped");
                 let label = format!("> {}", profile.equipped.pickaxe.name);
