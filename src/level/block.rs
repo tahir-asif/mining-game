@@ -184,7 +184,7 @@ static ROCK3: BlockDef = BlockDef {
 static ROCK4: BlockDef = BlockDef {
     category: BlockCategory::Rock,
     max_health: Some(10),
-    colour: Color::from_rgba(196, 171, 141, 255),
+    colour: Color::from_rgba(197, 171, 141, 255),
     drops: &[],
 };
 

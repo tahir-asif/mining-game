@@ -232,7 +232,10 @@ pub fn save_slots(ui: &mut Ui, transition: &mut TransitionState, state: &mut Loa
                         ui.separator();
 
                         ui.horizontal(|ui| {
-                            ui.label(small_text(format!("Gold: {}", profile.gold)));
+                            ui.label(
+                                small_text(format!("Gold: {}", profile.gold))
+                                    .color(egui::Color32::GOLD),
+                            );
                             ui.add_space(10.0);
                             ui.separator();
                             ui.add_space(10.0);

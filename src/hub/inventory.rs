@@ -90,6 +90,7 @@ pub fn draw_inventory(ui: &mut Ui, profile: &mut Profile) {
         });
     });
 }
+
 fn inventory_slot(ui: &mut Ui, size: f32, item_name: &str, sell_mode: bool) -> egui::Response {
     let (rect, response) = ui.allocate_exact_size(egui::vec2(size, size), egui::Sense::click());
 
@@ -143,6 +144,15 @@ fn inventory_slot(ui: &mut Ui, size: f32, item_name: &str, sell_mode: bool) -> e
                 "SELL?",
                 egui::FontId::proportional(20.0),
                 egui::Color32::RED,
+            );
+        }
+        if !sell_mode && response.hovered() {
+            painter.text(
+                image_rect.center(),
+                egui::Align2::CENTER_CENTER,
+                "Equip?",
+                egui::FontId::proportional(20.0),
+                egui::Color32::GOLD,
             );
         }
     }
