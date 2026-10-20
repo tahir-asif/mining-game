@@ -116,9 +116,11 @@ pub struct ItemEntry {
     pub item: ItemRef,
 }
 
+pub const STARTING_PICKAXE_ID: ItemId = 0;
+
 #[rustfmt::skip]
 pub const ITEMS: &[ItemEntry] = &[
-    ItemEntry { id: 0, item: ItemRef::Pickaxe(&STARTING_PICKAXE) },
+    ItemEntry { id: STARTING_PICKAXE_ID, item: ItemRef::Pickaxe(&STARTING_PICKAXE) },
     ItemEntry { id: 1, item: ItemRef::Hat(&STARTING_HAT) },
     ItemEntry { id: 2, item: ItemRef::Backpack(&STARTING_BACKPACK) },
     ItemEntry { id: 3, item: ItemRef::Pickaxe(&IRON_PICK) },

@@ -37,6 +37,7 @@ fn validate(levels: &[shared::RawLevel]) {
             );
         }
 
+        let mut goal_chests = Vec::new();
         for (z, row) in level.grid.iter().enumerate() {
             if row.len() != width {
                 panic!(
@@ -45,8 +46,14 @@ fn validate(levels: &[shared::RawLevel]) {
                 );
             }
             for (x, &id) in row.iter().enumerate() {
-                if id != shared::block::ID_EMPTY && shared::block::blocktype_from_id(id).is_none() {
-                    panic!("level {index}: unknown block id {id} at ({x}, {z})");
+                match shared::block::blocktype_from_id(id) {
+                    Some(kind) => {
+                        if kind.is_goal() {
+                            goal_chests.push((x, z));
+                        }
+                    }
+                    None if id == shared::block::ID_EMPTY => {}
+                    None => panic!("level {index}: unknown block id {id} at ({x}, {z})"),
                 }
             }
         }
@@ -67,27 +74,65 @@ fn validate(levels: &[shared::RawLevel]) {
             }
             if !matches!(
                 shared::block::blocktype_from_id(level.grid[z][x]),
-                Some(shared::BlockType::Chest1)
+                Some(kind) if kind.is_item_chest()
             ) {
-                panic!("level {index}: chest ({x}, {z}) is not on a chest block");
+                panic!(
+                    "level {index}: chest ({x}, {z}) is not on an ItemChest or GoalChest block"
+                );
             }
             if shared::items::get_item(*item).is_none() {
                 panic!("level {index}: chest ({x}, {z}) has unknown item id {item}");
             }
         }
 
-        if let shared::RawGoal::MineAllGold(gold_blocks) = level.goal {
-            let gold = shared::BlockType::GoldOre1.id();
-            let actual = level
-                .grid
-                .iter()
-                .flatten()
-                .filter(|&&id| id == gold)
-                .count();
-            if usize::from(gold_blocks) != actual {
-                panic!(
-                    "level {index}: MineAllGold count {gold_blocks} does not match {actual} gold blocks"
-                );
+        match level.goal {
+            shared::RawGoal::Collect { x, z } => {
+                let (gx, gz) = (usize::from(x), usize::from(z));
+                if gx >= width || gz >= height {
+                    panic!(
+                        "level {index}: Collect goal ({gx}, {gz}) is outside the interior"
+                    );
+                }
+                if goal_chests.len() != 1 {
+                    panic!(
+                        "level {index}: Collect goal requires exactly one GoalChest, found {}",
+                        goal_chests.len()
+                    );
+                }
+                if goal_chests[0] != (gx, gz) {
+                    panic!(
+                        "level {index}: GoalChest is at ({}, {}), expected ({gx}, {gz})",
+                        goal_chests[0].0, goal_chests[0].1
+                    );
+                }
+                if !level
+                    .chests
+                    .iter()
+                    .any(|((cx, cz), _)| usize::from(*cx) == gx && usize::from(*cz) == gz)
+                {
+                    panic!(
+                        "level {index}: Collect goal chest ({gx}, {gz}) has no item payload"
+                    );
+                }
+            }
+            shared::RawGoal::MineAllGold(gold_blocks) => {
+                if !goal_chests.is_empty() {
+                    panic!("level {index}: MineAllGold level must not contain a GoalChest");
+                }
+                let actual = level
+                    .grid
+                    .iter()
+                    .flatten()
+                    .filter(|&&id| {
+                        shared::block::blocktype_from_id(id)
+                            .is_some_and(|kind| kind.category() == shared::BlockCategory::GoldOre)
+                    })
+                    .count();
+                if usize::from(gold_blocks) != actual {
+                    panic!(
+                        "level {index}: MineAllGold count {gold_blocks} does not match {actual} gold blocks"
+                    );
+                }
             }
         }
     }

@@ -4,8 +4,8 @@ mod palette;
 
 use eframe::egui;
 use palette::{Brush, all_brushes, color, color_for_id, label, name_for_id};
-use shared::block::{BlockType, ID_EMPTY};
-use shared::items::get_item;
+use shared::block::{BlockCategory, BlockType, ID_EMPTY, blocktype_from_id};
+use shared::items::{STARTING_PICKAXE_ID, get_item};
 use shared::{ITEMS, ItemId, RawGoal, RawLevel};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
@@ -75,13 +75,48 @@ fn put_cell(level: &mut RawLevel, x: u8, z: u8, id: u8) {
     level.grid[z as usize][x as usize] = id;
 }
 
+fn is_goal_id(id: u8) -> bool {
+    blocktype_from_id(id).is_some_and(|kind| kind.is_goal())
+}
+
+fn goal_cell(level: &RawLevel) -> Option<(u8, u8)> {
+    match level.goal {
+        RawGoal::Collect { x, z } => Some((x, z)),
+        RawGoal::MineAllGold(_) => None,
+    }
+}
+
+fn clear_goal_chests(level: &mut RawLevel) {
+    for z in 0..level.height {
+        for x in 0..level.width {
+            let (xi, zi) = (x as usize, z as usize);
+            if is_goal_id(level.grid[zi][xi]) {
+                level.grid[zi][xi] = ID_EMPTY;
+                level.chests.retain(|(c, _)| *c != (x, z));
+            }
+        }
+    }
+}
+
+fn find_goal_cell(level: &RawLevel) -> Option<(u8, u8)> {
+    for z in 0..level.height {
+        for x in 0..level.width {
+            if (x, z) != level.spawn {
+                return Some((x, z));
+            }
+        }
+    }
+    None
+}
+
 fn count_gold(level: &RawLevel) -> u16 {
-    let gold = BlockType::GoldOre1.id();
     level
         .grid
         .iter()
         .flatten()
-        .filter(|&&id| id == gold)
+        .filter(|&&id| {
+            blocktype_from_id(id).is_some_and(|kind| kind.category() == BlockCategory::GoldOre)
+        })
         .count() as u16
 }
 
@@ -90,6 +125,34 @@ fn sync_gold_count(level: &mut RawLevel) {
     if let RawGoal::MineAllGold(gold_blocks) = &mut level.goal {
         *gold_blocks = count;
     }
+}
+
+fn normalize_goal_chest(level: &mut RawLevel) {
+    let RawGoal::Collect { x, z } = level.goal else {
+        clear_goal_chests(level);
+        return;
+    };
+    let mut gx = x.min(level.width.saturating_sub(1));
+    let mut gz = z.min(level.height.saturating_sub(1));
+    if (gx, gz) == level.spawn {
+        if let Some((fx, fz)) = find_goal_cell(level) {
+            gx = fx;
+            gz = fz;
+        } else {
+            return;
+        }
+    }
+    let item = level
+        .chests
+        .iter()
+        .find(|((cx, cz), _)| (*cx, *cz) == (gx, gz))
+        .map(|(_, item)| *item)
+        .unwrap_or(STARTING_PICKAXE_ID);
+    clear_goal_chests(level);
+    level.goal = RawGoal::Collect { x: gx, z: gz };
+    level.grid[gz as usize][gx as usize] = BlockType::GoalChest.id();
+    level.chests.retain(|(c, _)| *c != (gx, gz));
+    level.chests.push(((gx, gz), item));
 }
 
 pub struct LevelEditor {
@@ -114,6 +177,7 @@ pub struct LevelEditor {
 
     // Chest flow
     pending_chest: Option<(u8, u8)>,
+    pending_chest_kind: BlockType,
     pending_chest_item: ItemId,
 
     // Status / save / delete
@@ -153,7 +217,8 @@ impl LevelEditor {
             pan: egui::Vec2::ZERO,
             pan_drag_origin: None,
             pending_chest: None,
-            pending_chest_item: ITEMS.first().map_or(0, |entry| entry.id),
+            pending_chest_kind: BlockType::ItemChest,
+            pending_chest_item: STARTING_PICKAXE_ID,
             saved_at: None,
             pending_delete_at: None,
             history: History::new(),
@@ -163,6 +228,7 @@ impl LevelEditor {
     fn save(&mut self) {
         for level in &mut self.levels {
             sync_gold_count(level);
+            normalize_goal_chest(level);
         }
         let config = ron::ser::PrettyConfig::new()
             .separate_tuple_members(false) // Collect(x: 3, z: 3) on one line
@@ -189,14 +255,14 @@ impl LevelEditor {
         self.history.snapshot(&self.levels);
         let (w, h) = (20u8, 15u8);
         let mut grid = vec![vec![ID_EMPTY; w as usize]; h as usize];
-        grid[2][2] = BlockType::EnergyCrystal1.id();
+        grid[2][2] = BlockType::GoalChest.id();
         let level = RawLevel {
             spawn: (1, 1),
             width: w,
             height: h,
             goal: RawGoal::Collect { x: 2, z: 2 },
             grid,
-            chests: vec![],
+            chests: vec![((2, 2), STARTING_PICKAXE_ID)],
         };
         self.levels.insert(at, level);
         self.current = at;
@@ -205,6 +271,7 @@ impl LevelEditor {
         self.pending_recenter = true;
         self.pending_delete_at = None;
         self.goal_pick_mode = false;
+        self.pending_chest = None;
     }
 
     fn new_level(&mut self) {
@@ -225,6 +292,8 @@ impl LevelEditor {
             self.current -= 1;
             self.pending_recenter = true;
             self.pending_delete_at = None;
+            self.pending_chest = None;
+            self.goal_pick_mode = false;
         }
     }
 
@@ -233,6 +302,8 @@ impl LevelEditor {
             self.current += 1;
             self.pending_recenter = true;
             self.pending_delete_at = None;
+            self.pending_chest = None;
+            self.goal_pick_mode = false;
         }
     }
 
@@ -243,6 +314,20 @@ impl LevelEditor {
         let level = &mut self.levels[self.current];
         let old_w = level.width as usize;
         let old_h = level.height as usize;
+        let goal_item = match level.goal {
+            RawGoal::Collect { x, z }
+                if usize::from(x) < old_w
+                    && usize::from(z) < old_h
+                    && is_goal_id(level.grid[z as usize][x as usize]) =>
+            {
+                level
+                    .chests
+                    .iter()
+                    .find(|((cx, cz), _)| (*cx, *cz) == (x, z))
+                    .map(|(_, item)| *item)
+            }
+            _ => None,
+        };
         let nw = new_w as usize;
         let nh = new_h as usize;
         let mut new_grid = vec![vec![ID_EMPTY; nw]; nh];
@@ -257,11 +342,46 @@ impl LevelEditor {
         level.spawn.0 = level.spawn.0.min(new_w.saturating_sub(1));
         level.spawn.1 = level.spawn.1.min(new_h.saturating_sub(1));
         level.grid[level.spawn.1 as usize][level.spawn.0 as usize] = ID_EMPTY;
-        if let RawGoal::Collect { x, z } = &mut level.goal {
-            *x = (*x).min(new_w.saturating_sub(1));
-            *z = (*z).min(new_h.saturating_sub(1));
-        }
         level.chests.retain(|((x, z), _)| *x < new_w && *z < new_h);
+        clear_goal_chests(level);
+        if let RawGoal::Collect { x, z } = level.goal {
+            let mut gx = x.min(new_w.saturating_sub(1));
+            let mut gz = z.min(new_h.saturating_sub(1));
+            if (gx, gz) == level.spawn {
+                if let Some((fx, fz)) = find_goal_cell(level) {
+                    gx = fx;
+                    gz = fz;
+                }
+            }
+            level.goal = RawGoal::Collect { x: gx, z: gz };
+            if (gx, gz) != level.spawn {
+                level.grid[gz as usize][gx as usize] = BlockType::GoalChest.id();
+                level.chests.retain(|(c, _)| *c != (gx, gz));
+                level
+                    .chests
+                    .push(((gx, gz), goal_item.unwrap_or(STARTING_PICKAXE_ID)));
+            }
+        }
+        self.dirty = true;
+    }
+
+    fn set_goal_chest(&mut self, x: u8, z: u8) {
+        if self.levels.is_empty() {
+            return;
+        }
+        let level = &mut self.levels[self.current];
+        if (x, z) == level.spawn || x >= level.width || z >= level.height {
+            return;
+        }
+        clear_goal_chests(level);
+        level.goal = RawGoal::Collect { x, z };
+        level.grid[z as usize][x as usize] = BlockType::GoalChest.id();
+        level.chests.retain(|(c, _)| *c != (x, z));
+        level.chests.push(((x, z), STARTING_PICKAXE_ID));
+        self.pending_chest = Some((x, z));
+        self.pending_chest_kind = BlockType::GoalChest;
+        self.pending_chest_item = STARTING_PICKAXE_ID;
+        self.goal_pick_mode = false;
         self.dirty = true;
     }
 
@@ -274,6 +394,8 @@ impl LevelEditor {
         self.current = self.current.min(self.levels.len() - 1);
         self.dirty = true;
         self.pending_delete_at = None;
+        self.pending_chest = None;
+        self.goal_pick_mode = false;
     }
 
     fn cell_color(&self, level: &RawLevel, x: u8, z: u8) -> egui::Color32 {
@@ -291,6 +413,10 @@ impl LevelEditor {
         let brush = self.selected_brush;
         let level = &mut self.levels[self.current];
         let (xi, zi) = (x as usize, z as usize);
+
+        if goal_cell(level) == Some((x, z)) {
+            return;
+        }
 
         if self.tool == Tool::Erase || brush == Brush::Empty {
             level.grid[zi][xi] = ID_EMPTY;
@@ -310,10 +436,14 @@ impl LevelEditor {
                 level.chests.retain(|(c, _)| *c != (x, z));
                 self.dirty = true;
             }
-            Brush::Block(BlockType::Chest1) => {
-                if let Some((_, id)) = level.chests.iter().find(|(c, _)| *c == (x, z)) {
-                    self.pending_chest_item = *id;
-                }
+            Brush::Block(BlockType::ItemChest) => {
+                self.pending_chest_item = level
+                    .chests
+                    .iter()
+                    .find(|(c, _)| *c == (x, z))
+                    .map(|(_, id)| *id)
+                    .unwrap_or(STARTING_PICKAXE_ID);
+                self.pending_chest_kind = BlockType::ItemChest;
                 self.pending_chest = Some((x, z));
             }
             Brush::Block(kind) => {
@@ -368,7 +498,8 @@ impl LevelEditor {
             return;
         }
         let new_id = match self.selected_brush {
-            Brush::Spawn | Brush::Block(BlockType::Chest1) => return,
+            Brush::Spawn => return,
+            Brush::Block(kind) if kind.is_item_chest() => return,
             brush => brush.block_id().unwrap_or(ID_EMPTY),
         };
 
@@ -393,10 +524,11 @@ impl LevelEditor {
             if level.grid[zi][xi] != target_id {
                 continue;
             }
-            put_cell(level, cx as u8, cz as u8, new_id);
-            if new_id == ID_EMPTY {
-                level.chests.retain(|(c, _)| *c != (cx as u8, cz as u8));
+            if is_goal_id(level.grid[zi][xi]) {
+                continue;
             }
+            put_cell(level, cx as u8, cz as u8, new_id);
+            level.chests.retain(|(c, _)| *c != (cx as u8, cz as u8));
             stack.push((cx + 1, cz));
             stack.push((cx - 1, cz));
             stack.push((cx, cz + 1));
@@ -492,14 +624,24 @@ impl LevelEditor {
         let is_collect = matches!(self.levels[self.current].goal, RawGoal::Collect { .. });
         ui.horizontal(|ui| {
             if ui.radio(is_collect, "Collect").clicked() && !is_collect {
+                self.history.snapshot(&self.levels);
+                clear_goal_chests(&mut self.levels[self.current]);
                 self.levels[self.current].goal = RawGoal::Collect { x: 1, z: 1 };
                 self.goal_pick_mode = true;
+                if self.pending_chest_kind.is_goal() {
+                    self.pending_chest = None;
+                }
                 self.dirty = true;
             }
             if ui.radio(!is_collect, "Mine All Gold").clicked() && is_collect {
+                self.history.snapshot(&self.levels);
+                clear_goal_chests(&mut self.levels[self.current]);
                 let gold_blocks = count_gold(&self.levels[self.current]);
                 self.levels[self.current].goal = RawGoal::MineAllGold(gold_blocks);
                 self.goal_pick_mode = false;
+                if self.pending_chest_kind.is_goal() {
+                    self.pending_chest = None;
+                }
                 self.dirty = true;
             }
         });
@@ -508,10 +650,22 @@ impl LevelEditor {
             if self.goal_pick_mode {
                 ui.colored_label(
                     egui::Color32::from_rgb(140, 70, 0),
-                    "Click a grid cell to set goal…",
+                    "Click a grid cell to place the GoalChest and choose its item…",
                 );
                 if ui.button("Cancel").clicked() {
                     self.goal_pick_mode = false;
+                    let has_goal_chest = {
+                        let level = &self.levels[self.current];
+                        let (xi, zi) = (x as usize, z as usize);
+                        zi < level.grid.len()
+                            && xi < level.grid[zi].len()
+                            && is_goal_id(level.grid[zi][xi])
+                    };
+                    if !has_goal_chest {
+                        let gold_blocks = count_gold(&self.levels[self.current]);
+                        self.levels[self.current].goal = RawGoal::MineAllGold(gold_blocks);
+                    }
+                    self.dirty = true;
                 }
             } else {
                 ui.horizontal(|ui| {
@@ -596,10 +750,10 @@ impl LevelEditor {
         // --- Interactions ---
         if self.goal_pick_mode && response.clicked_by(egui::PointerButton::Primary) {
             if let Some((x, z)) = self.hover_cell {
-                self.history.snapshot(&self.levels);
-                self.levels[self.current].goal = RawGoal::Collect { x, z };
-                self.goal_pick_mode = false;
-                self.dirty = true;
+                if (x, z) != self.levels[self.current].spawn {
+                    self.history.snapshot(&self.levels);
+                    self.set_goal_chest(x, z);
+                }
             }
         } else if !space_held {
             match self.tool {
@@ -663,10 +817,7 @@ impl LevelEditor {
                 }
                 let x = bx - 1;
                 let z = bz - 1;
-                let inside = x >= 0
-                    && z >= 0
-                    && x < level.width as i32
-                    && z < level.height as i32;
+                let inside = x >= 0 && z >= 0 && x < level.width as i32 && z < level.height as i32;
                 let color = if inside {
                     self.cell_color(level, x as u8, z as u8)
                 } else {
@@ -787,7 +938,9 @@ impl LevelEditor {
                 let desc = if (x, z) == level.spawn {
                     "PlayerSpawn".to_string()
                 } else if let Some((_, id)) = level.chests.iter().find(|(c, _)| *c == (x, z)) {
-                    let name = get_item(*id).map(|item| item.name()).unwrap_or("unknown item");
+                    let name = get_item(*id)
+                        .map(|item| item.name())
+                        .unwrap_or("unknown item");
                     format!("Chest — {name}")
                 } else {
                     let id = level.grid[z as usize][x as usize];
@@ -808,7 +961,11 @@ impl LevelEditor {
         let text_min = viewport.min + egui::vec2(2.0, 2.0);
         painter.galley(text_min, coords_galley, text_color);
         if let Some(desc_galley) = desc_galley {
-            painter.galley(text_min + egui::vec2(0.0, line_height), desc_galley, text_color);
+            painter.galley(
+                text_min + egui::vec2(0.0, line_height),
+                desc_galley,
+                text_color,
+            );
         }
     }
 
@@ -816,13 +973,24 @@ impl LevelEditor {
         let Some((cx, cz)) = self.pending_chest else {
             return;
         };
+        let kind = self.pending_chest_kind;
+        let item = self.pending_chest_item;
         let level = &mut self.levels[self.current];
-        if (cx, cz) != level.spawn {
-            put_cell(level, cx, cz, BlockType::Chest1.id());
-            level.chests.retain(|(c, _)| *c != (cx, cz));
-            level.chests.push(((cx, cz), self.pending_chest_item));
-            self.dirty = true;
+        if cx >= level.width || cz >= level.height || (cx, cz) == level.spawn {
+            self.pending_chest = None;
+            return;
         }
+        if kind.is_goal() {
+            if goal_cell(level) != Some((cx, cz)) {
+                self.pending_chest = None;
+                return;
+            }
+            clear_goal_chests(level);
+        }
+        put_cell(level, cx, cz, kind.id());
+        level.chests.retain(|(c, _)| *c != (cx, cz));
+        level.chests.push(((cx, cz), item));
+        self.dirty = true;
         self.pending_chest = None;
     }
 
@@ -837,7 +1005,10 @@ impl LevelEditor {
             .resizable(false)
             .open(&mut open)
             .show(ctx, |ui| {
-                ui.label(format!("Item for chest at ({cx}, {cz}):"));
+                ui.label(format!(
+                    "Item for {} at ({cx}, {cz}):",
+                    self.pending_chest_kind.name()
+                ));
                 egui::ScrollArea::vertical()
                     .max_height(220.0)
                     .show(ui, |ui| {
@@ -940,13 +1111,12 @@ impl eframe::App for LevelEditor {
                     if self.current != previous {
                         self.pending_recenter = true;
                         self.pending_delete_at = None;
+                        self.pending_chest = None;
+                        self.goal_pick_mode = false;
                     }
                 }
                 if ui
-                    .add_enabled(
-                        self.current + 1 < self.levels.len(),
-                        egui::Button::new("▶"),
-                    )
+                    .add_enabled(self.current + 1 < self.levels.len(), egui::Button::new("▶"))
                     .clicked()
                 {
                     self.next_level();

@@ -33,7 +33,11 @@ impl Brush {
 
 pub fn all_brushes() -> Vec<Brush> {
     let mut brushes = vec![Brush::Empty, Brush::Spawn];
-    brushes.extend(BlockType::iter().map(Brush::Block));
+    brushes.extend(
+        BlockType::iter()
+            .filter(|kind| !kind.is_goal())
+            .map(Brush::Block),
+    );
     brushes
 }
 
@@ -55,14 +59,24 @@ pub const fn color(brush: Brush) -> Color32 {
 
 pub const fn block_color(kind: BlockType) -> Color32 {
     match kind {
-        BlockType::Wall1 => Color32::from_rgb(25, 25, 30),
-        BlockType::Chest1 => Color32::from_rgb(255, 220, 40),
+        BlockType::Torch => Color32::from_rgb(255, 150, 40),
+        BlockType::GoalChest => Color32::from_rgb(90, 200, 120),
+        BlockType::StarChest => Color32::from_rgb(80, 150, 255),
+        BlockType::ItemChest => Color32::from_rgb(255, 220, 40),
+        BlockType::Wall1 => Color32::from_rgb(50, 50, 50),
         BlockType::EnergyCrystal1 => Color32::from_rgb(220, 60, 60),
         BlockType::TechCrystal1 => Color32::from_rgb(60, 100, 220),
         BlockType::GoldOre1 => Color32::from_rgb(230, 190, 50),
-        BlockType::Rock1 => Color32::from_rgb(190, 150, 110),
-        BlockType::Rock2 => Color32::from_rgb(150, 110, 80),
-        BlockType::Rock3 => Color32::from_rgb(110, 80, 60),
+        BlockType::Rock1 => Color32::from_rgb(238, 228, 212),
+        BlockType::Rock2 => Color32::from_rgb(226, 211, 190),
+        BlockType::Rock3 => Color32::from_rgb(212, 192, 166),
+        BlockType::Rock4 => Color32::from_rgb(196, 171, 141),
+        BlockType::Rock5 => Color32::from_rgb(178, 149, 116),
+        BlockType::Rock6 => Color32::from_rgb(157, 126, 94),
+        BlockType::Rock7 => Color32::from_rgb(135, 104, 75),
+        BlockType::Rock8 => Color32::from_rgb(112, 83, 58),
+        BlockType::Rock9 => Color32::from_rgb(88, 63, 42),
+        BlockType::Rock10 => Color32::from_rgb(66, 46, 30),
     }
 }
 

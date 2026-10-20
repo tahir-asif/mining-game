@@ -44,9 +44,12 @@
   therefore save progression/hub unlocks (`level.id <=
   profile.latest_completed_level`).
 - `build.rs` fails the build on wrong row/column counts, unknown block ids,
-  out-of-bounds or non-empty spawn, a chest not on `Chest1`/with an invalid
-  item id, and `MineAllGold(n)` where `n` does not equal the actual gold block
-  count. Fix `levels.ron` rather than weakening validation.
+  out-of-bounds or non-empty spawn, a chest payload not on an
+  `ItemChest`/`GoalChest` or with an invalid item id, a `Collect` goal not
+  backed by exactly one `GoalChest` at the goal cell with a payload, a
+  `MineAllGold` level containing a `GoalChest`, and `MineAllGold(n)` where `n`
+  does not equal the actual gold block count. Fix `levels.ron` rather than
+  weakening validation.
 - Grids are `grid[z][x]`; `build.rs` flattens row-major (`z*width+x`), while
   `GameMap` stores column-major (`x*height+z`) via `index_map`. Keep both
   directions consistent when touching either side.
