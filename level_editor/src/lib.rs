@@ -1013,13 +1013,13 @@ impl LevelEditor {
                     .max_height(220.0)
                     .show(ui, |ui| {
                         for entry in ITEMS {
-                            let selected = self.pending_chest_item == entry.id;
-                            let response = ui.selectable_label(selected, entry.item.name());
+                            let selected = self.pending_chest_item == entry.id();
+                            let response = ui.selectable_label(selected, entry.name());
                             if response.clicked() {
-                                self.pending_chest_item = entry.id;
+                                self.pending_chest_item = entry.id();
                             }
                             if response.double_clicked() {
-                                self.pending_chest_item = entry.id;
+                                self.pending_chest_item = entry.id();
                                 self.commit_chest();
                             }
                         }

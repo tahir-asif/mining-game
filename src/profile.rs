@@ -71,7 +71,7 @@ impl Profile {
     }
 
     fn remove_item(&mut self, item: ItemRef) {
-        if let Some(index) = self.items.iter().position(|&i| i.same_item(item)) {
+        if let Some(index) = self.items.iter().position(|&i| i == item) {
             self.items.remove(index);
         }
     }

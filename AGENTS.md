@@ -8,7 +8,6 @@
   are not interchangeable.
 - Repo folder is `rust_game` but the package/artifact is `mining_game`; web
   assets hardcode `mining_game.wasm`.
-- No tests (`cargo test` runs zero), no rustfmt/clippy/toolchain config.
 
 ## LLM Rules
 
@@ -27,7 +26,7 @@
   `level_editor`.
 - Level editor: `cargo editor` (alias = `run --release -p level_editor`). Run
   from the repo root; the optional path arg defaults to `levels.ron`.
-- `cargo test` runs zero tests — verify with `cargo check`.
+- `cargo test` to run tests, currently there are not many.
 - Web build: `cargo build --release --target wasm32-unknown-unknown`. CI on
   `main` copies the wasm, `index.html`, and everything in `static/` to Pages.
 - No formatter/linter config; don't mass-format unrelated code.

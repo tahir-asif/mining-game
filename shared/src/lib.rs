@@ -4,7 +4,7 @@ pub mod level;
 
 pub use block::{BlockCategory, BlockType};
 pub use items::{
-    ITEMS, ItemEntry, ItemId, ItemKind, ItemRef, STARTING_BACKPACK, STARTING_HAT, STARTING_PICKAXE,
+    ITEMS, ItemId, ItemKind, ItemRef, STARTING_BACKPACK, STARTING_HAT, STARTING_PICKAXE,
     STARTING_PICKAXE_ID,
 };
 pub use level::{BlockId, RawGoal, RawLevel};
