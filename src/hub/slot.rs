@@ -7,6 +7,7 @@ pub enum HoverOnSlot {
     Equip,
     PlaceIntoForge,
     RemoveFromForge,
+    CollectFromForge,
 }
 
 pub fn inventory_slot(
@@ -97,6 +98,15 @@ pub fn inventory_slot(
                         "Remove?",
                         egui::FontId::proportional(20.0),
                         egui::Color32::DARK_RED,
+                    );
+                }
+                HoverOnSlot::CollectFromForge => {
+                    painter.text(
+                        image_rect.center(),
+                        egui::Align2::CENTER_CENTER,
+                        "Collect?",
+                        egui::FontId::proportional(20.0),
+                        egui::Color32::GOLD,
                     );
                 }
             }

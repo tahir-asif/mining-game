@@ -1,5 +1,8 @@
 use crate::level::winnings::Winnings;
-use shared::items::{Backpack, Hat, ItemRef, Pickaxe};
+use shared::{
+    ItemId,
+    items::{Backpack, Hat, ItemRef, Pickaxe},
+};
 use std::cmp;
 
 pub struct Equipped {
@@ -10,18 +13,18 @@ pub struct Equipped {
 
 pub struct Profile {
     pub name: String,
-    pub slot: u8,
+    pub save_slot: u8,
     pub gold: u16,
-    pub items: Vec<ItemRef>,
+    items: Vec<ItemId>,
     pub equipped: Equipped,
     pub latest_completed_level: u8,
 }
 
 impl Profile {
-    pub const fn new(name: String, slot: u8) -> Self {
+    pub const fn new(name: String, save_slot: u8) -> Self {
         Profile {
             name,
-            slot,
+            save_slot,
             gold: 0,
             items: vec![],
             equipped: Equipped {
@@ -46,39 +49,50 @@ impl Profile {
     }
 
     pub fn equip(&mut self, item: ItemRef) {
-        self.remove_item(item);
+        self.remove_item(item.id());
 
         match item {
             ItemRef::Pickaxe(pickaxe) => {
-                self.items.push(ItemRef::Pickaxe(self.equipped.pickaxe));
+                self.add_item(ItemRef::Pickaxe(self.equipped.pickaxe).id());
                 self.equipped.pickaxe = pickaxe;
             }
             ItemRef::Hat(hat) => {
-                self.items.push(ItemRef::Hat(self.equipped.hat));
+                self.add_item(ItemRef::Hat(self.equipped.hat).id());
                 self.equipped.hat = hat;
             }
             ItemRef::Backpack(backpack) => {
-                self.items.push(ItemRef::Backpack(self.equipped.backpack));
+                self.add_item(ItemRef::Backpack(self.equipped.backpack).id());
                 self.equipped.backpack = backpack;
             }
         }
     }
 
-    pub fn sell(&mut self, item: ItemRef) {
-        self.remove_item(item);
-
+    pub fn sell_item(&mut self, item: ItemRef) {
+        self.remove_item(item.id());
         self.gold += item.price();
     }
 
-    fn remove_item(&mut self, item: ItemRef) {
-        if let Some(index) = self.items.iter().position(|&i| i == item) {
-            self.items.remove(index);
+    pub fn items(&self) -> &[ItemId] {
+        &self.items
+    }
+
+    pub fn add_item(&mut self, id: ItemId) {
+        let i = self.items.partition_point(|&x| x < id);
+        self.items.insert(i, id);
+    }
+
+    pub fn remove_item(&mut self, id: ItemId) {
+        let i = self.items.partition_point(|&x| x < id);
+        if self.items.get(i) == Some(&id) {
+            self.items.remove(i);
         }
     }
 
     pub fn collect_winnings(&mut self, winnings: Winnings) {
         self.gold += winnings.gold;
-        self.items.extend(winnings.items);
+        for item in winnings.items {
+            self.add_item(item.id());
+        }
         self.latest_completed_level =
             cmp::max(winnings.latest_completed_level, self.latest_completed_level);
     }

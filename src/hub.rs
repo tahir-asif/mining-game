@@ -1,26 +1,42 @@
 mod forge;
 mod inventory;
+mod inventory_ui;
 mod slot;
 
 use crate::{
     game::{GameState, TransitionState},
-    hub::{forge::Forge, inventory::draw_inventory},
+    hub::{forge::Forge, inventory::Inventory},
     level::levels::LEVELS,
     profile::Profile,
     styles::small_text,
 };
 use egui_macroquad::egui::{self, Align, Color32, Layout, Ui};
+use shared::{
+    ItemId,
+    items::{BACKPACK_RANGE, HAT_RANGE, PICKAXE_RANGE},
+};
 
 const GRID_SPACING: f32 = 8.0;
 const TARGET_GRID_SIZE: f32 = 120.0;
 const TOOLBAR_HEIGHT: f32 = 80.0;
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 enum Filter {
     All,
     Pickaxes,
     Hats,
     Backpacks,
+}
+
+impl Filter {
+    pub fn matches(self, id: ItemId) -> bool {
+        match self {
+            Filter::All => true,
+            Filter::Pickaxes => PICKAXE_RANGE.contains(&id),
+            Filter::Hats => HAT_RANGE.contains(&id),
+            Filter::Backpacks => BACKPACK_RANGE.contains(&id),
+        }
+    }
 }
 
 enum CenterPanelState {
@@ -31,6 +47,7 @@ enum CenterPanelState {
 pub struct Hub {
     center_panel_state: CenterPanelState,
     forge: Forge,
+    inventory: Inventory,
 }
 
 impl Hub {
@@ -38,6 +55,7 @@ impl Hub {
         Hub {
             center_panel_state: CenterPanelState::Inventory,
             forge: Forge::new(),
+            inventory: Inventory::new(),
         }
     }
 
@@ -68,8 +86,14 @@ impl Hub {
 
             egui::CentralPanel::default().frame(frame).show(ctx, |ui| {
                 match self.center_panel_state {
-                    CenterPanelState::Inventory => draw_inventory(ui, profile),
-                    CenterPanelState::Forge => self.forge.draw_forge(ui, profile),
+                    CenterPanelState::Inventory => {
+                        self.forge.reset_screen();
+                        self.inventory.draw(ui, profile);
+                    }
+                    CenterPanelState::Forge => {
+                        self.inventory.reset_screen();
+                        self.forge.draw_forge(ui, profile);
+                    }
                 }
             });
         });
@@ -114,6 +138,7 @@ impl Hub {
 
             ui.with_layout(Layout::bottom_up(Align::LEFT), |ui| {
                 if ui.button("Main Menu").clicked() {
+                    self.forge.return_all(profile);
                     *transition = TransitionState::GoTo(GameState::MainMenu);
                 }
             });
@@ -124,7 +149,7 @@ impl Hub {
         &mut self,
         ui: &mut Ui,
         transition: &mut TransitionState,
-        profile: &Profile,
+        profile: &mut Profile,
     ) {
         ui.vertical_centered_justified(|ui| {
             ui.label("Levels");
@@ -139,6 +164,7 @@ impl Hub {
                     }
 
                     if ui.add_enabled(unlocked, btn).clicked() {
+                        self.forge.return_all(profile);
                         *transition = TransitionState::StartLevel(level.id);
                     }
                 }

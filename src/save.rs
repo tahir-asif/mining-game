@@ -30,9 +30,9 @@ impl From<&Profile> for SavedProfile {
     fn from(p: &Profile) -> Self {
         Self {
             name: p.name.clone(),
-            slot: p.slot,
+            slot: p.save_slot,
             gold: p.gold,
-            items: p.items.iter().map(|i| i.id()).collect(),
+            items: p.items().to_vec(),
             equipped: SavedEquipped {
                 pickaxe: ItemRef::Pickaxe(p.equipped.pickaxe).id(),
                 hat: ItemRef::Hat(p.equipped.hat).id(),
@@ -59,16 +59,16 @@ impl TryFrom<SavedProfile> for Profile {
                 .ok_or("Invalid backpack ID in save file")?,
         };
 
-        let items = s.items.into_iter().filter_map(items::get_item).collect();
-
-        Ok(Profile {
-            name: s.name,
-            slot: s.slot,
-            gold: s.gold,
-            items,
-            equipped,
-            latest_completed_level: s.latest_completed_level,
-        })
+        let mut profile = Profile::new(s.name, s.slot);
+        profile.gold = s.gold;
+        profile.equipped = equipped;
+        profile.latest_completed_level = s.latest_completed_level;
+        for id in s.items {
+            if items::get_item(id).is_some() {
+                profile.add_item(id);
+            }
+        }
+        Ok(profile)
     }
 }
 
@@ -76,7 +76,7 @@ pub fn save_profile(profile: &Profile) -> Result<(), String> {
     let saved = SavedProfile::from(profile);
     let json = serde_json::to_string(&saved).map_err(|e| e.to_string())?;
     let mut storage = quad_storage::STORAGE.lock().unwrap();
-    storage.set(&slot_key(profile.slot), &json);
+    storage.set(&slot_key(profile.save_slot), &json);
     Ok(())
 }
 
