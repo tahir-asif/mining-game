@@ -49,6 +49,40 @@ impl GameMap {
         let half = vec2(width * 0.5 * GRID_SIZE, height * 0.5 * GRID_SIZE);
         draw_plane(centre, half, None, Color::new(0.12, 0.12, 0.14, 1.0));
 
+        // draw outline of walls around the level
+        let x_boundry = self.width as i16;
+        let z_boundry = self.height as i16;
+        let wall_colour = Block::new(shared::BlockType::Wall1).colour();
+        for x in -1..x_boundry {
+            draw_cube(
+                vec3(GRID_SIZE * x as f32, 0.0, GRID_SIZE * -1 as f32),
+                vec3(GRID_SIZE * 1.0, GRID_SIZE * 1.0, GRID_SIZE * 1.0),
+                None,
+                wall_colour,
+            );
+            draw_cube(
+                vec3(GRID_SIZE * x as f32, 0.0, GRID_SIZE * z_boundry as f32),
+                vec3(GRID_SIZE * 1.0, GRID_SIZE * 1.0, GRID_SIZE * 1.0),
+                None,
+                wall_colour,
+            );
+        }
+        for z in -1..z_boundry {
+            draw_cube(
+                vec3(GRID_SIZE * -1 as f32, 0.0, GRID_SIZE * z as f32),
+                vec3(GRID_SIZE * 1.0, GRID_SIZE * 1.0, GRID_SIZE * 1.0),
+                None,
+                wall_colour,
+            );
+            draw_cube(
+                vec3(GRID_SIZE * x_boundry as f32, 0.0, GRID_SIZE * z as f32),
+                vec3(GRID_SIZE * 1.0, GRID_SIZE * 1.0, GRID_SIZE * 1.0),
+                None,
+                wall_colour,
+            );
+        }
+
+        // draw level
         for x in 0..self.width {
             for z in 0..self.height {
                 let i = self.index_map(MapCoords::new(x, z));
