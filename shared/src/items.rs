@@ -5,21 +5,24 @@ pub type ItemId = u8;
 pub struct Backpack {
     pub id: ItemId,
     pub name: &'static str,
-    pub starting_tech: u16,
     pub price: u16,
+    pub forges_into: Option<ItemId>,
+    pub starting_tech: u16,
 }
 
 pub struct Hat {
     pub id: ItemId,
     pub name: &'static str,
-    pub starting_energy: u16,
     pub price: u16,
+    pub forges_into: Option<ItemId>,
+    pub starting_energy: u16,
 }
 
 pub struct Pickaxe {
     pub id: ItemId,
     pub name: &'static str,
     pub price: u16,
+    pub forges_into: Option<ItemId>,
     pub mining_power: u16,
 }
 
@@ -71,9 +74,17 @@ impl ItemRef {
 
     pub const fn price(self) -> u16 {
         match self {
-            ItemRef::Pickaxe(pickaxe) => pickaxe.price,
-            ItemRef::Hat(hat) => hat.price,
-            ItemRef::Backpack(backpack) => backpack.price,
+            ItemRef::Pickaxe(item) => item.price,
+            ItemRef::Hat(item) => item.price,
+            ItemRef::Backpack(item) => item.price,
+        }
+    }
+
+    pub const fn forges_into(self) -> Option<ItemId> {
+        match self {
+            ItemRef::Pickaxe(item) => item.forges_into,
+            ItemRef::Hat(item) => item.forges_into,
+            ItemRef::Backpack(item) => item.forges_into,
         }
     }
 
@@ -193,35 +204,41 @@ pub static STARTING_PICKAXE: Pickaxe = Pickaxe {
     id: 0,
     name: "Starting Pick",
     price: 1,
+    forges_into: None,
     mining_power: 1,
 };
 pub static IRON_PICK: Pickaxe = Pickaxe {
     id: 1,
     name: "Iron Pick",
     price: 10,
+    forges_into: Some(2),
     mining_power: 2,
 };
 pub static GOLD_PICK: Pickaxe = Pickaxe {
     id: 2,
     name: "Gold Pick",
     price: 30,
+    forges_into: Some(3),
     mining_power: 5,
 };
 pub static DIAMOND_PICK: Pickaxe = Pickaxe {
     id: 3,
     name: "Diamond Pick",
     price: 100,
+    forges_into: None,
     mining_power: 50,
 };
 pub static STARTING_HAT: Hat = Hat {
     id: 4,
     name: "Starting Hat",
     price: 1,
+    forges_into: None,
     starting_energy: 10,
 };
 pub static STARTING_BACKPACK: Backpack = Backpack {
     id: 5,
     name: "Starting Backpack",
     price: 1,
+    forges_into: None,
     starting_tech: 10,
 };

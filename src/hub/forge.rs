@@ -1,5 +1,4 @@
 use egui_macroquad::egui::{self, Ui};
-use macroquad::prelude::warn;
 use shared::items::{ItemId, get_item};
 
 use crate::{
@@ -187,7 +186,10 @@ impl Forge {
         if a != b {
             return;
         }
-        let Some(result_id) = recipe_for(a) else {
+        let Some(item) = get_item(a) else {
+            return;
+        };
+        let Some(result_id) = item.forges_into() else {
             return;
         };
         self.slot_1 = None;
@@ -200,9 +202,4 @@ impl Forge {
 /// Intentionaly returns "" if id doesn't exist.
 fn item_name(id: ItemId) -> &'static str {
     get_item(id).map_or("", |i| i.name())
-}
-
-fn recipe_for(id: ItemId) -> Option<ItemId> {
-    warn!("Recipes not implemented, returning same item");
-    Some(id)
 }
