@@ -8,6 +8,10 @@ version = "0.1.0"
 edition = "2024"
 build = "build.rs"
 
+[profile.profiling]
+inherits = "release"
+debug = true
+
 [dependencies]
 egui-macroquad = "0.17.3"
 macroquad = "0.4.16"
