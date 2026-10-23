@@ -4,7 +4,7 @@ use shared::items::{ItemId, get_item};
 use crate::{
     hub::{
         Filter, TOOLBAR_HEIGHT,
-        inventory_ui::{draw_filter_bar, draw_inventory_grid, inventory_layout},
+        inventory_ui::{draw_filter_bar, draw_inventory_grid, inventory_layout, item_labels},
         slot::{HoverOnSlot, inventory_slot},
     },
     profile::Profile,
@@ -17,6 +17,7 @@ pub struct Forge {
     pub result_slot: Option<ItemId>,
     forge_btn_unlocked: bool,
     filter: Filter,
+    hovered_over_item: Option<ItemId>,
 }
 
 #[derive(Clone, Copy)]
@@ -33,6 +34,7 @@ impl Forge {
             result_slot: None,
             forge_btn_unlocked: false,
             filter: Filter::All,
+            hovered_over_item: None,
         }
     }
 
@@ -46,8 +48,7 @@ impl Forge {
 
     pub fn draw_forge(&mut self, ui: &mut Ui, profile: &mut Profile) {
         ui.vertical(|ui| {
-            ui.set_max_height(TOOLBAR_HEIGHT);
-            ui.set_min_height(TOOLBAR_HEIGHT);
+            ui.set_height(TOOLBAR_HEIGHT);
             ui.label(header_text("Forge"));
             ui.add_space(10.0);
             ui.horizontal(|ui| {
@@ -55,9 +56,10 @@ impl Forge {
             });
         });
 
-        let frame = egui::Frame::new().inner_margin(30.0);
+        let frame = egui::Frame::new().inner_margin(15.0);
         ui.horizontal_top(|ui| {
             frame.show(ui, |ui| {
+                ui.set_width(250.0);
                 ui.vertical(|ui| {
                     ui.add_space(30.0);
                     self.forge_crafting(ui, profile);
@@ -72,10 +74,23 @@ impl Forge {
                     }
 
                     ui.add_space(20.0);
-                    ui.label("Input 1: blah");
-                    ui.label("Input 2: blah");
-                    ui.label("Result: blah");
-                    ui.label("Result stats: blah");
+                    if let Some(id) = self.slot_1 {
+                        if let Some(item) = get_item(id) {
+                            ui.label("In Crafting: ");
+                            ui.add_space(10.0);
+                            item_labels(ui, item);
+                        }
+                    } else if let Some(id) = self.result_slot {
+                        if let Some(item) = get_item(id) {
+                            ui.label("Forged:");
+                            ui.add_space(10.0);
+                            item_labels(ui, item);
+                        }
+                    } else if let Some(id) = self.hovered_over_item {
+                        if let Some(item) = get_item(id) {
+                            item_labels(ui, item);
+                        }
+                    }
                 });
             });
             frame.show(ui, |ui| {
@@ -92,16 +107,20 @@ impl Forge {
             None => self.filter.matches(id),
         };
 
-        if let Some(id) = draw_inventory_grid(
+        let (clicked, hovered) = draw_inventory_grid(
             ui,
             profile.items(),
             visible,
             slot_size,
             num_cols,
             HoverOnSlot::PlaceIntoForge,
-        ) {
+        );
+
+        if let Some(id) = clicked {
             let _ = self.push_to_slot(id, profile);
         }
+
+        self.hovered_over_item = hovered;
     }
 
     fn forge_crafting(&mut self, ui: &mut Ui, profile: &mut Profile) {

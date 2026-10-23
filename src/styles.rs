@@ -63,9 +63,9 @@ pub fn header_text(t: impl Into<String>) -> RichText {
     RichText::new(t).text_style(TextStyle::Heading)
 }
 
-// pub fn normal_text(t: impl Into<String>) -> RichText {
-//     RichText::new(t).text_style(TextStyle::Body)
-// }
+pub fn normal_text(t: impl Into<String>) -> RichText {
+    RichText::new(t).text_style(TextStyle::Body)
+}
 
 pub fn small_text(t: impl Into<String>) -> RichText {
     RichText::new(t).text_style(TextStyle::Small)

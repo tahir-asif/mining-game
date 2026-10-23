@@ -1,10 +1,10 @@
 use egui_macroquad::egui::{self, Ui};
-use shared::items::get_item;
+use shared::{ItemId, items::get_item};
 
 use crate::{
     hub::{
         Filter, TOOLBAR_HEIGHT,
-        inventory_ui::{draw_filter_bar, draw_inventory_grid, inventory_layout},
+        inventory_ui::{draw_filter_bar, draw_inventory_grid, inventory_layout, item_labels},
         slot::HoverOnSlot,
     },
     profile::Profile,
@@ -14,6 +14,7 @@ use crate::{
 pub struct Inventory {
     filter: Filter,
     sell_mode: bool,
+    hovered_over_item: Option<ItemId>,
 }
 
 impl Inventory {
@@ -21,6 +22,7 @@ impl Inventory {
         Inventory {
             filter: Filter::All,
             sell_mode: false,
+            hovered_over_item: None,
         }
     }
 
@@ -31,8 +33,7 @@ impl Inventory {
 
     pub fn draw(&mut self, ui: &mut Ui, profile: &mut Profile) {
         ui.vertical(|ui| {
-            ui.set_max_height(TOOLBAR_HEIGHT);
-            ui.set_min_height(TOOLBAR_HEIGHT);
+            ui.set_height(TOOLBAR_HEIGHT);
             ui.label(header_text("Inventory"));
             ui.add_space(10.0);
             ui.horizontal(|ui| {
@@ -52,8 +53,22 @@ impl Inventory {
             });
         });
 
-        let frame = egui::Frame::new().inner_margin(30.0);
-        frame.show(ui, |ui| self.inventory_grid(ui, profile));
+        let frame = egui::Frame::new().inner_margin(15.0);
+        ui.horizontal_top(|ui| {
+            frame.show(ui, |ui| {
+                ui.set_width(250.0);
+                ui.vertical(|ui| {
+                    if let Some(id) = self.hovered_over_item {
+                        if let Some(item) = get_item(id) {
+                            item_labels(ui, item);
+                        }
+                    }
+                });
+            });
+            frame.show(ui, |ui| {
+                self.inventory_grid(ui, profile);
+            });
+        });
     }
 
     fn inventory_grid(&mut self, ui: &mut Ui, profile: &mut Profile) {
@@ -65,9 +80,10 @@ impl Inventory {
         };
 
         let visible = |id| self.filter.matches(id);
-        if let Some(id) =
-            draw_inventory_grid(ui, profile.items(), visible, slot_size, num_cols, hover)
-        {
+        let (clicked, hovered) =
+            draw_inventory_grid(ui, profile.items(), visible, slot_size, num_cols, hover);
+
+        if let Some(id) = clicked {
             let Some(item) = get_item(id) else { return };
             if self.sell_mode {
                 profile.sell_item(item);
@@ -75,5 +91,7 @@ impl Inventory {
                 profile.equip(item);
             }
         }
+
+        self.hovered_over_item = hovered;
     }
 }

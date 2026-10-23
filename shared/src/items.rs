@@ -88,6 +88,14 @@ impl ItemRef {
         }
     }
 
+    pub const fn ability(self) -> u16 {
+        match self {
+            ItemRef::Pickaxe(item) => item.mining_power,
+            ItemRef::Hat(item) => item.starting_energy,
+            ItemRef::Backpack(item) => item.starting_tech,
+        }
+    }
+
     pub fn is_pickaxe(self) -> bool {
         matches!(self, ItemRef::Pickaxe(_))
     }

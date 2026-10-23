@@ -8,7 +8,7 @@ use crate::{
     hub::{forge::Forge, inventory::Inventory},
     level::levels::LEVELS,
     profile::Profile,
-    styles::small_text,
+    styles::{normal_text, small_text},
 };
 use egui_macroquad::egui::{self, Align, Color32, Layout, Ui};
 use shared::{
@@ -18,7 +18,7 @@ use shared::{
 
 const GRID_SPACING: f32 = 8.0;
 const TARGET_GRID_SIZE: f32 = 120.0;
-const TOOLBAR_HEIGHT: f32 = 80.0;
+const TOOLBAR_HEIGHT: f32 = 100.0;
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 enum Filter {
@@ -109,11 +109,11 @@ impl Hub {
     ) {
         ui.vertical_centered_justified(|ui| {
             ui.horizontal(|ui| {
-                ui.label(small_text("Gold:"));
+                ui.label("Gold:");
 
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     let label = format!("{}", profile.gold);
-                    ui.label(small_text(&label).color(egui::Color32::GOLD));
+                    ui.label(normal_text(&label).color(egui::Color32::GOLD));
                 });
             });
 
@@ -128,11 +128,23 @@ impl Hub {
             ui.add_space(40.0);
             ui.vertical(|ui| {
                 ui.label("Equipped");
+                ui.add_space(10.0);
+
                 let label = format!("> {}", profile.equipped.pickaxe.name);
                 ui.label(small_text(&label));
+                let label = format!("Mining Power: {}", profile.equipped.pickaxe.mining_power);
+                ui.label(small_text(&label));
+                ui.add_space(10.0);
+
                 let label = format!("> {}", profile.equipped.hat.name);
                 ui.label(small_text(&label));
+                let label = format!("Starting Energy: {}", profile.equipped.hat.starting_energy);
+                ui.label(small_text(&label));
+                ui.add_space(10.0);
+
                 let label = format!("> {}", profile.equipped.backpack.name);
+                ui.label(small_text(&label));
+                let label = format!("Starting Tech: {}", profile.equipped.backpack.starting_tech);
                 ui.label(small_text(&label));
             });
 

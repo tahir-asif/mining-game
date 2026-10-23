@@ -4,7 +4,10 @@ use crate::hub::{
     Filter, GRID_SPACING, TARGET_GRID_SIZE,
     slot::{HoverOnSlot, inventory_slot},
 };
-use shared::items::{get_item, ItemId};
+use shared::{
+    ItemRef,
+    items::{ItemId, get_item},
+};
 
 pub fn draw_filter_bar(ui: &mut Ui, filter: &mut Filter) {
     ui.radio_value(filter, Filter::All, "All");
@@ -29,8 +32,9 @@ pub fn draw_inventory_grid(
     slot_size: f32,
     num_cols: usize,
     hover: HoverOnSlot,
-) -> Option<ItemId> {
+) -> (Option<ItemId>, Option<ItemId>) {
     let mut clicked = None;
+    let mut hovered = None;
 
     egui::ScrollArea::vertical()
         .auto_shrink([false, false])
@@ -47,8 +51,12 @@ pub fn draw_inventory_grid(
 
                         let name = get_item(id).map_or("", |i| i.name());
 
-                        if inventory_slot(ui, slot_size, name, hover).clicked() {
+                        let slot = inventory_slot(ui, slot_size, name, hover);
+                        if slot.clicked() {
                             clicked = Some(id);
+                        }
+                        if slot.hovered() {
+                            hovered = Some(id);
                         }
 
                         visible_count += 1;
@@ -59,5 +67,22 @@ pub fn draw_inventory_grid(
                 });
         });
 
-    clicked
+    (clicked, hovered)
+}
+
+pub fn item_labels(ui: &mut Ui, item: ItemRef) {
+    ui.label(format!("{}", item.name()));
+    ui.label(format!("Sells for {}", item.price()));
+    let label = match item.kind() {
+        shared::ItemKind::Backpack => {
+            format!("Starting Tech: {}", item.ability())
+        }
+        shared::ItemKind::Hat => {
+            format!("Starting Energy: {}", item.ability())
+        }
+        shared::ItemKind::Pickaxe => {
+            format!("Mining Power: {}", item.ability())
+        }
+    };
+    ui.label(label);
 }
