@@ -6,7 +6,7 @@ use crate::{
     styles::small_text,
 };
 use egui_macroquad::egui::{self, Layout, RichText, Ui};
-use macroquad::{color::*, window::clear_background};
+use macroquad::prelude::*;
 
 pub fn main_menu_update() -> TransitionState {
     let mut transition = TransitionState::None;
@@ -20,9 +20,11 @@ pub fn main_menu_update() -> TransitionState {
         egui::CentralPanel::default()
             .frame(frame)
             .show(egui_ctx, |ui| {
-                ui.vertical(|ui| {
-                    ui.add_space(30.0);
+                ui.vertical_centered(|ui| {
+                    ui.add_space(screen_height() * 0.25);
+
                     ui.label(egui::RichText::new("Puzzle Miner").size(64.0));
+                    ui.add_space(24.0);
 
                     ui.scope(|ui| {
                         ui.style_mut().text_styles.insert(
@@ -136,6 +138,7 @@ pub fn load_save_update(state: &mut LoadSaveState) -> TransitionState {
             });
 
         egui::CentralPanel::default().frame(frame).show(ctx, |ui| {
+            ui.add_space(20.0);
             ui.vertical_centered(|ui| {
                 save_slots(ui, &mut transition, state);
             });
@@ -153,6 +156,7 @@ pub fn save_slots(ui: &mut Ui, transition: &mut TransitionState, state: &mut Loa
             .fill(egui::Color32::from_gray(20).gamma_multiply(0.5))
             .show(ui, |ui| {
                 ui.set_width(ui.available_width() * 0.9);
+                ui.set_height(100.0);
 
                 match slot_opt {
                     None => {
