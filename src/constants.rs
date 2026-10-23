@@ -11,5 +11,5 @@ pub const WINDOW_HEIGHT_INT: i32 = 1000;
 pub const SAVE_SLOT_COUNT: u8 = 3;
 
 pub const PLAYER_EXPLORE_RADIUS: u8 = 1;
-pub const SPAWN_EXPLORE_RADIUS: u8 = 1;
+pub const SPAWN_EXPLORE_RADIUS: u8 = 2;
 pub const TORCH_EXPLORE_RADIUS: u8 = 2;

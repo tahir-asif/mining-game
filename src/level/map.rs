@@ -93,7 +93,9 @@ impl GameMap {
         for x in min_x..max_x {
             for z in min_z..max_z {
                 let i = self.index_map(MapCoords::new(x, z));
-                self.fog_of_war_map[i] = false;
+                if let Some(b) = self.fog_of_war_map.get_mut(i) {
+                    *b = false;
+                }
             }
         }
     }
