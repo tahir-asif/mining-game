@@ -89,7 +89,11 @@ impl Level {
         }
 
         self.handle_input();
-        ui::draw_ui(&mut self.player, self.meta_data.goal);
+        ui::draw_ui(
+            &mut self.player,
+            self.meta_data.goal,
+            self.gold_blocks_mined,
+        );
         TransitionState::None
     }
 

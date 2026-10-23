@@ -1,7 +1,7 @@
 use crate::level::{levels::Goal, player::Player};
 
-use egui_macroquad::egui::{self, Align2, Ui};
-pub fn draw_ui(player: &mut Player, goal: Goal) {
+use egui_macroquad::egui::{self, Align2, Label, Ui};
+pub fn draw_ui(player: &mut Player, goal: Goal, gold_mined: u16) {
     egui_macroquad::ui(|ctx| {
         egui::Area::new("hud_top_left".into())
             .anchor(Align2::LEFT_TOP, egui::vec2(10.0, 10.0))
@@ -11,18 +11,18 @@ pub fn draw_ui(player: &mut Player, goal: Goal) {
         egui::Area::new("hud_top_right".into())
             .anchor(Align2::RIGHT_TOP, egui::vec2(-10.0, 10.0))
             .show(ctx, |ui| {
-                hud_top_right(ui, goal);
+                hud_top_right(ui, goal, gold_mined);
             });
     });
 }
 
-fn hud_top_right(ui: &mut Ui, goal: Goal) {
+fn hud_top_right(ui: &mut Ui, goal: Goal, gold_mined: u16) {
     egui::Frame::new()
         .fill(egui::Color32::from_gray(70))
         .inner_margin(8.0)
         .corner_radius(4.0)
         .show(ui, |ui| {
-            ui.label(goal.to_str());
+            ui.add(Label::new(goal.to_str(gold_mined)).wrap_mode(egui::TextWrapMode::Extend));
         });
 }
 

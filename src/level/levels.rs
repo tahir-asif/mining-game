@@ -24,10 +24,10 @@ pub enum Goal {
 }
 
 impl Goal {
-    pub const fn to_str(self) -> &'static str {
+    pub fn to_str(self, gold_mined: u16) -> String {
         match self {
-            Goal::Collect(_) => "!  Collect an item",
-            Goal::MineAllGold(_) => "!  Mine all gold",
+            Goal::Collect(_) => format!("!  Find the exit chest"),
+            Goal::MineAllGold(total) => format!("!  Mine all gold {gold_mined}/{total}"),
         }
     }
 }
