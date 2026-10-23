@@ -13,7 +13,7 @@ pub enum BlockCategory {
     Torch,
 }
 
-#[derive(Clone, Copy, EnumIter, TryFromPrimitive, IntoPrimitive)]
+#[derive(Clone, Copy, PartialEq, Eq, EnumIter, TryFromPrimitive, IntoPrimitive)]
 #[repr(u8)]
 pub enum BlockType {
     Torch = 1,

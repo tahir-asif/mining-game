@@ -30,6 +30,13 @@ fn validate(levels: &[shared::RawLevel]) {
         let width = usize::from(level.width);
         let height = usize::from(level.height);
 
+        if level.width > 253 || level.height > 253 {
+            panic!(
+                "level {index}: size {}x{} exceeds maximum 253x253",
+                level.width, level.height
+            );
+        }
+
         if level.grid.len() != height {
             panic!(
                 "level {index}: grid has {} rows, expected {height}",
@@ -60,20 +67,20 @@ fn validate(levels: &[shared::RawLevel]) {
 
         let spawn_x = usize::from(level.spawn.0);
         let spawn_z = usize::from(level.spawn.1);
-        if spawn_x >= width || spawn_z >= height {
+        if spawn_x < 1 || spawn_x > width || spawn_z < 1 || spawn_z > height {
             panic!("level {index}: spawn ({spawn_x}, {spawn_z}) is outside the interior");
         }
-        if level.grid[spawn_z][spawn_x] != shared::block::ID_EMPTY {
+        if level.grid[spawn_z - 1][spawn_x - 1] != shared::block::ID_EMPTY {
             panic!("level {index}: spawn ({spawn_x}, {spawn_z}) is not empty");
         }
 
         for ((x, z), item) in &level.chests {
             let (x, z) = (usize::from(*x), usize::from(*z));
-            if x >= width || z >= height {
+            if x < 1 || x > width || z < 1 || z > height {
                 panic!("level {index}: chest ({x}, {z}) is outside the interior");
             }
             if !matches!(
-                shared::block::blocktype_from_id(level.grid[z][x]),
+                shared::block::blocktype_from_id(level.grid[z - 1][x - 1]),
                 Some(kind) if kind.is_item_chest()
             ) {
                 panic!(
@@ -88,7 +95,7 @@ fn validate(levels: &[shared::RawLevel]) {
         match level.goal {
             shared::RawGoal::Collect { x, z } => {
                 let (gx, gz) = (usize::from(x), usize::from(z));
-                if gx >= width || gz >= height {
+                if gx < 1 || gx > width || gz < 1 || gz > height {
                     panic!(
                         "level {index}: Collect goal ({gx}, {gz}) is outside the interior"
                     );
@@ -99,10 +106,11 @@ fn validate(levels: &[shared::RawLevel]) {
                         goal_chests.len()
                     );
                 }
-                if goal_chests[0] != (gx, gz) {
+                if goal_chests[0] != (gx - 1, gz - 1) {
                     panic!(
                         "level {index}: GoalChest is at ({}, {}), expected ({gx}, {gz})",
-                        goal_chests[0].0, goal_chests[0].1
+                        goal_chests[0].0 + 1,
+                        goal_chests[0].1 + 1
                     );
                 }
                 if !level

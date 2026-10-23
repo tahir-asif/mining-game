@@ -155,6 +155,23 @@ fn normalize_goal_chest(level: &mut RawLevel) {
     level.chests.push(((gx, gz), item));
 }
 
+fn shift(v: u8, delta: i8) -> u8 {
+    (i16::from(v) + i16::from(delta)) as u8
+}
+
+fn shift_coords(level: &mut RawLevel, delta: i8) {
+    level.spawn.0 = shift(level.spawn.0, delta);
+    level.spawn.1 = shift(level.spawn.1, delta);
+    if let RawGoal::Collect { x, z } = &mut level.goal {
+        *x = shift(*x, delta);
+        *z = shift(*z, delta);
+    }
+    for ((x, z), _) in &mut level.chests {
+        *x = shift(*x, delta);
+        *z = shift(*z, delta);
+    }
+}
+
 pub struct LevelEditor {
     levels: Vec<RawLevel>,
     levels_path: PathBuf,
@@ -195,6 +212,7 @@ impl LevelEditor {
             .unwrap_or_default();
 
         for level in levels.iter_mut() {
+            shift_coords(level, -1);
             let (sx, sz) = (level.spawn.0 as usize, level.spawn.1 as usize);
             if sz < level.grid.len() && sx < level.grid[sz].len() {
                 level.grid[sz][sx] = ID_EMPTY;
@@ -229,11 +247,16 @@ impl LevelEditor {
         for level in &mut self.levels {
             sync_gold_count(level);
             normalize_goal_chest(level);
+            shift_coords(level, 1);
         }
         let config = ron::ser::PrettyConfig::new()
             .separate_tuple_members(false) // Collect(x: 3, z: 3) on one line
             .depth_limit(3);
-        match ron::ser::to_string_pretty(&self.levels, config) {
+        let serialized = ron::ser::to_string_pretty(&self.levels, config);
+        for level in &mut self.levels {
+            shift_coords(level, -1);
+        }
+        match serialized {
             Ok(s) => match std::fs::write(&self.levels_path, s) {
                 Ok(_) => {
                     self.dirty = false;
@@ -587,7 +610,7 @@ impl LevelEditor {
             let l = &self.levels[self.current];
             (l.width, l.height, l.spawn)
         };
-        ui.label(format!("Spawn: ({}, {})", spawn.0, spawn.1));
+        ui.label(format!("Spawn: ({}, {})", spawn.0 + 1, spawn.1 + 1));
 
         // Resizable size
         let mut new_w = w;
@@ -597,8 +620,8 @@ impl LevelEditor {
             if ui.add_enabled(w > 1, egui::Button::new("−")).clicked() {
                 new_w = w - 1;
             }
-            ui.label(format!("{w:>2}"));
-            if ui.add_enabled(w < 255, egui::Button::new("+")).clicked() {
+            ui.add(egui::DragValue::new(&mut new_w).range(1..=253));
+            if ui.add_enabled(w < 253, egui::Button::new("+")).clicked() {
                 new_w = w + 1;
             }
 
@@ -608,8 +631,8 @@ impl LevelEditor {
             if ui.add_enabled(h > 1, egui::Button::new("−")).clicked() {
                 new_h = h - 1;
             }
-            ui.label(format!("{h:>2}"));
-            if ui.add_enabled(h < 255, egui::Button::new("+")).clicked() {
+            ui.add(egui::DragValue::new(&mut new_h).range(1..=253));
+            if ui.add_enabled(h < 253, egui::Button::new("+")).clicked() {
                 new_h = h + 1;
             }
         });
@@ -669,7 +692,7 @@ impl LevelEditor {
                 }
             } else {
                 ui.horizontal(|ui| {
-                    ui.label(format!("at ({x}, {z})"));
+                    ui.label(format!("at ({}, {})", x + 1, z + 1));
                     if ui.button("Pick on grid").clicked() {
                         self.goal_pick_mode = true;
                     }
@@ -948,7 +971,7 @@ impl LevelEditor {
                         .map(|name| name.to_string())
                         .unwrap_or(format!("id {id}"))
                 };
-                (format!("({x}, {z})"), Some(desc))
+                (format!("({}, {})", x + 1, z + 1), Some(desc))
             }
             None => ("(outside grid)".to_string(), None),
         };
@@ -995,9 +1018,9 @@ impl LevelEditor {
     }
 
     fn show_chest_window(&mut self, ctx: &egui::Context) {
-        let Some((cx, cz)) = self.pending_chest else {
+        if self.pending_chest.is_none() {
             return;
-        };
+        }
         let mut open = true;
         egui::Window::new("Chest item")
             .id(egui::Id::new("chest_item_window"))
@@ -1005,10 +1028,7 @@ impl LevelEditor {
             .resizable(false)
             .open(&mut open)
             .show(ctx, |ui| {
-                ui.label(format!(
-                    "Item for {} at ({cx}, {cz}):",
-                    self.pending_chest_kind.name()
-                ));
+                ui.label(format!("Item for {}:", self.pending_chest_kind.name()));
                 egui::ScrollArea::vertical()
                     .max_height(220.0)
                     .show(ui, |ui| {

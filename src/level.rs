@@ -1,12 +1,13 @@
-mod block;
-mod camera;
 pub mod coordinate;
 pub mod levels;
-mod map;
 pub mod outcome;
+pub mod winnings;
+
+mod block;
+mod camera;
+mod map;
 mod player;
 mod ui;
-pub mod winnings;
 
 use crate::{
     game::TransitionState,
@@ -55,7 +56,7 @@ impl Level {
         );
         let camera = Camera::new(player.get_coords());
 
-        game_map.generate_level(meta_data.block_ids);
+        game_map.generate_level(meta_data.block_ids, meta_data.spawn);
 
         Level {
             player,
@@ -208,15 +209,22 @@ impl Level {
     }
 
     fn handle_input(&mut self) {
-        let shift_held: bool = is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift);
+        let is_shift_held: bool =
+            is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift);
         match get_last_key_pressed() {
             None => {}
-            Some(KeyCode::Up) | Some(KeyCode::W) => self.move_player(Direction::Up, shift_held),
-            Some(KeyCode::Down) | Some(KeyCode::S) => self.move_player(Direction::Down, shift_held),
-            Some(KeyCode::Right) | Some(KeyCode::D) => {
-                self.move_player(Direction::Right, shift_held)
+            Some(KeyCode::Up) | Some(KeyCode::W) => {
+                self.move_player(Direction::Up, is_shift_held);
             }
-            Some(KeyCode::Left) | Some(KeyCode::A) => self.move_player(Direction::Left, shift_held),
+            Some(KeyCode::Down) | Some(KeyCode::S) => {
+                self.move_player(Direction::Down, is_shift_held)
+            }
+            Some(KeyCode::Right) | Some(KeyCode::D) => {
+                self.move_player(Direction::Right, is_shift_held)
+            }
+            Some(KeyCode::Left) | Some(KeyCode::A) => {
+                self.move_player(Direction::Left, is_shift_held)
+            }
             Some(_) => {}
         }
     }
@@ -240,6 +248,7 @@ impl Level {
             return;
         }
         self.player.move_to(move_to);
+        self.game_map.reveal_map(move_to, map::Reveal::Player);
         self.camera.point(move_to);
     }
 
