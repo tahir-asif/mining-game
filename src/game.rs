@@ -122,7 +122,6 @@ impl Game {
             Outcome::Win(winnings) => {
                 let profile = self.get_profile();
                 profile.collect_winnings(winnings);
-                profile.latest_completed_level += 1;
             }
             Outcome::Lose => {}
             Outcome::Exit => {}

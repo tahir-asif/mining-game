@@ -205,6 +205,10 @@ impl Level {
             .iter()
             .filter_map(|&id| get_item(id))
             .collect();
+        debug!(
+            "[DEBUG] level::calc_winnings: level id = {}",
+            self.meta_data.id
+        );
         Winnings {
             gold: self.player.collected_gold,
             items,

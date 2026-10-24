@@ -14,7 +14,7 @@ pub struct LevelData {
 
 pub fn get_level(id: LevelId) -> Option<&'static LevelData> {
     let id = usize::from(id);
-    LEVELS.get(id).copied()
+    LEVELS.get(id - 1).copied()
 }
 
 #[derive(Clone, Copy)]

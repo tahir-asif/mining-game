@@ -168,10 +168,10 @@ impl Hub {
             egui::ScrollArea::vertical().show(ui, |ui| {
                 let mut unlocked = true;
                 for level in LEVELS {
-                    let label = format!("{}", level.id + 1);
+                    let label = format!("{}", level.id);
                     let btn = egui::Button::new(&label);
 
-                    if level.id > profile.latest_completed_level {
+                    if level.id > profile.latest_completed_level + 1 {
                         unlocked = false;
                     }
 

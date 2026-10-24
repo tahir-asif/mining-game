@@ -1,6 +1,7 @@
 use crate::level::{levels::Goal, player::Player};
 
-use egui_macroquad::egui::{self, Align2, Label, Ui};
+use egui_macroquad::egui::{self, Align2, Frame, Label, Ui};
+
 pub fn draw_ui(player: &mut Player, goal: Goal, gold_mined: u16) {
     egui_macroquad::ui(|ctx| {
         egui::Area::new("hud_top_left".into())
@@ -11,48 +12,70 @@ pub fn draw_ui(player: &mut Player, goal: Goal, gold_mined: u16) {
         egui::Area::new("hud_top_right".into())
             .anchor(Align2::RIGHT_TOP, egui::vec2(-10.0, 10.0))
             .show(ctx, |ui| {
-                hud_top_right(ui, goal, gold_mined);
+                hud_top_right(ui, player, goal, gold_mined);
+            });
+        egui::Area::new("hud_bottom_right".into())
+            .anchor(Align2::RIGHT_BOTTOM, egui::vec2(-10.0, -10.0))
+            .show(ctx, |ui| {
+                hud_bottom_right(ui, player);
             });
     });
 }
 
-fn hud_top_right(ui: &mut Ui, goal: Goal, gold_mined: u16) {
+fn hud_frame() -> Frame {
     egui::Frame::new()
         .fill(egui::Color32::from_gray(70))
         .inner_margin(8.0)
         .corner_radius(4.0)
-        .show(ui, |ui| {
+}
+
+fn hud_bottom_right(ui: &mut Ui, player: &mut Player) {
+    let frame = hud_frame();
+
+    let block_size = egui::vec2(50.0, 50.0);
+
+    ui.horizontal(|ui| {
+        frame.show(ui, |ui| {
+            ui.allocate_ui_with_layout(
+                block_size,
+                egui::Layout::top_down(egui::Align::Center),
+                |ui| {
+                    ui.label("TECH");
+                    ui.label(format!("{}", player.tech));
+                },
+            );
+        });
+
+        frame.show(ui, |ui| {
+            ui.label("Bomb");
+            ui.label("10");
+        });
+    });
+}
+
+fn hud_top_right(ui: &mut Ui, player: &mut Player, goal: Goal, gold_mined: u16) {
+    let frame = hud_frame();
+
+    ui.horizontal_top(|ui| {
+        frame.show(ui, |ui| {
             ui.add(Label::new(goal.to_str(gold_mined)).wrap_mode(egui::TextWrapMode::Extend));
         });
+        frame.show(ui, |ui| {
+            ui.vertical_centered(|ui| {
+                ui.label("GOLD");
+                ui.label(format!("{}", player.collected_gold));
+            });
+        });
+    });
 }
 
 fn hud_top_left(ui: &mut Ui, player: &mut Player) {
-    egui::Frame::new()
-        .fill(egui::Color32::from_gray(70))
-        .inner_margin(8.0)
-        .corner_radius(4.0)
-        .show(ui, |ui| {
-            egui::Grid::new("hud_stats_grid")
-                .num_columns(2)
-                .spacing([40.0, 4.0])
-                .show(ui, |ui| {
-                    ui.label("ENERGY");
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        ui.label(format!("{}", player.energy));
-                    });
-                    ui.end_row();
+    let frame = hud_frame();
 
-                    ui.label("TECH");
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        ui.label(format!("{}", player.tech));
-                    });
-                    ui.end_row();
-
-                    ui.label("GOLD");
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        ui.label(format!("{}", player.collected_gold));
-                    });
-                    ui.end_row();
-                });
+    frame.show(ui, |ui| {
+        ui.vertical_centered(|ui| {
+            ui.label("ENERGY");
+            ui.label(format!("{}", player.energy));
         });
+    });
 }
