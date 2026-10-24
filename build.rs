@@ -137,6 +137,14 @@ fn validate(levels: &[shared::RawLevel]) {
                 }
             }
         }
+
+        let star_chests = level.star_chest_count();
+        if star_chests != usize::from(shared::STAR_CHESTS_PER_LEVEL) {
+            panic!(
+                "level {index}: expected {} StarChests, found {star_chests}",
+                shared::STAR_CHESTS_PER_LEVEL
+            );
+        }
     }
 }
 

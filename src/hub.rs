@@ -8,7 +8,7 @@ use crate::{
     hub::{forge::Forge, inventory::Inventory},
     level::levels::LEVELS,
     profile::Profile,
-    styles::{normal_text, small_text},
+    styles::{normal_text, small_text, star_text},
 };
 use egui_macroquad::egui::{self, Align, Color32, Layout, Ui};
 use shared::{
@@ -75,7 +75,7 @@ impl Hub {
                     self.draw_left_sidebar(ui, profile, &mut transition)
                 });
 
-            let panel_width = 100.0;
+            let panel_width = 150.0;
             egui::SidePanel::right("Levels")
                 .frame(frame.fill(fill_colour.linear_multiply(0.1)))
                 .exact_width(panel_width)
@@ -168,7 +168,11 @@ impl Hub {
             egui::ScrollArea::vertical().show(ui, |ui| {
                 let mut unlocked = true;
                 for level in LEVELS {
-                    let label = format!("{}", level.id);
+                    let label = format!(
+                        "{} {}",
+                        level.id,
+                        star_text(profile.stars_for(level.id))
+                    );
                     let btn = egui::Button::new(&label);
 
                     if level.id > profile.latest_completed_level + 1 {

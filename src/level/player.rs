@@ -3,7 +3,7 @@ use crate::level::block::{Drop, DropKind};
 use crate::level::coordinate::MapCoords;
 
 use macroquad::prelude::*;
-use shared::ItemId;
+use shared::{ItemId, StarCount};
 
 pub struct Player {
     coords: MapCoords,
@@ -12,6 +12,7 @@ pub struct Player {
     pub mining_power: u16,
     pub collected_gold: u16,
     pub collected_items: Vec<ItemId>,
+    pub stars: StarCount,
 }
 
 impl Player {
@@ -23,6 +24,7 @@ impl Player {
             mining_power,
             collected_gold: 0,
             collected_items: vec![],
+            stars: StarCount::Zero,
         }
     }
 
@@ -45,12 +47,20 @@ impl Player {
                     self.energy += drop.amount;
                     return Some(DropKind::Energy);
                 }
+                DropKind::Tech => {
+                    self.tech += drop.amount;
+                    return Some(DropKind::Tech);
+                }
                 DropKind::Gold => {
                     self.collected_gold += drop.amount;
                     return Some(DropKind::Gold);
                 }
                 DropKind::Item => {
                     return Some(DropKind::Item);
+                }
+                DropKind::Star => {
+                    self.stars = self.stars.next();
+                    return Some(DropKind::Star);
                 }
             }
         }

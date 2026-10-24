@@ -213,6 +213,7 @@ impl Level {
             gold: self.player.collected_gold,
             items,
             latest_completed_level: self.meta_data.id,
+            stars: self.player.stars,
         }
     }
 
@@ -284,7 +285,9 @@ impl Level {
                                 self.player.collected_items.push(*loot);
                             }
                         }
+                        DropKind::Star => {}
                         DropKind::Energy => {}
+                        DropKind::Tech => {}
                     }
                 }
             }

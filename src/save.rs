@@ -1,5 +1,6 @@
 use crate::profile::{Equipped, Profile};
 use serde::{Deserialize, Serialize};
+use shared::StarCount;
 use shared::items::{self, ItemId, ItemRef};
 
 const SLOT_KEY_PREFIX: &str = "save_slot_";
@@ -22,8 +23,8 @@ struct SavedProfile {
     gold: u16,
     items: Vec<ItemId>,
     equipped: SavedEquipped,
-    #[serde(default)]
     latest_completed_level: u8,
+    stars: Vec<StarCount>,
 }
 
 impl From<&Profile> for SavedProfile {
@@ -39,6 +40,7 @@ impl From<&Profile> for SavedProfile {
                 backpack: ItemRef::Backpack(p.equipped.backpack).id(),
             },
             latest_completed_level: p.latest_completed_level,
+            stars: p.stars().to_vec(),
         }
     }
 }
@@ -63,6 +65,7 @@ impl TryFrom<SavedProfile> for Profile {
         profile.gold = s.gold;
         profile.equipped = equipped;
         profile.latest_completed_level = s.latest_completed_level;
+        profile.restore_stars(s.stars);
         for id in s.items {
             if items::get_item(id).is_some() {
                 profile.add_item(id);

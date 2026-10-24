@@ -1,6 +1,7 @@
+use crate::level::levels::LevelId;
 use crate::level::winnings::Winnings;
 use shared::{
-    ItemId,
+    ItemId, StarCount,
     items::{Backpack, Hat, ItemRef, Pickaxe},
 };
 use std::cmp;
@@ -18,6 +19,7 @@ pub struct Profile {
     items: Vec<ItemId>,
     pub equipped: Equipped,
     pub latest_completed_level: u8,
+    stars: Vec<StarCount>,
 }
 
 impl Profile {
@@ -33,6 +35,7 @@ impl Profile {
                 backpack: &shared::STARTING_BACKPACK,
             },
             latest_completed_level: 0,
+            stars: vec![],
         }
     }
 
@@ -88,12 +91,42 @@ impl Profile {
         }
     }
 
+    pub fn stars_for(&self, level: LevelId) -> StarCount {
+        level
+            .checked_sub(1)
+            .and_then(|i| self.stars.get(usize::from(i)))
+            .copied()
+            .unwrap_or(StarCount::Zero)
+    }
+
+    fn record_stars(&mut self, level: LevelId, stars: StarCount) {
+        let Some(index) = level.checked_sub(1).map(usize::from) else {
+            return;
+        };
+        if self.stars.len() <= index {
+            self.stars.resize(index + 1, StarCount::Zero);
+        }
+        self.stars[index] = self.stars[index].max(stars);
+    }
+
+    pub fn stars(&self) -> &[StarCount] {
+        &self.stars
+    }
+
+    pub(crate) fn restore_stars(&mut self, stars: Vec<StarCount>) {
+        self.stars = stars;
+        self.stars.truncate(crate::level::levels::LEVELS.len());
+    }
+
     pub fn collect_winnings(&mut self, winnings: Winnings) {
+        self.record_stars(winnings.latest_completed_level, winnings.stars);
+
         self.gold += winnings.gold;
+        self.latest_completed_level =
+            cmp::max(winnings.latest_completed_level, self.latest_completed_level);
+
         for item in winnings.items {
             self.add_item(item.id());
         }
-        self.latest_completed_level =
-            cmp::max(winnings.latest_completed_level, self.latest_completed_level);
     }
 }

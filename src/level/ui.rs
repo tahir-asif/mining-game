@@ -1,4 +1,5 @@
 use crate::level::{levels::Goal, player::Player};
+use crate::styles::star_text;
 
 use egui_macroquad::egui::{self, Align2, Frame, Label, Ui};
 
@@ -57,6 +58,9 @@ fn hud_top_right(ui: &mut Ui, player: &mut Player, goal: Goal, gold_mined: u16) 
     let frame = hud_frame();
 
     ui.horizontal_top(|ui| {
+        frame.show(ui, |ui| {
+            ui.label(star_text(player.stars));
+        });
         frame.show(ui, |ui| {
             ui.add(Label::new(goal.to_str(gold_mined)).wrap_mode(egui::TextWrapMode::Extend));
         });

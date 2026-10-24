@@ -6,7 +6,7 @@ use eframe::egui;
 use palette::{Brush, all_brushes, color, color_for_id, label, name_for_id};
 use shared::block::{BlockCategory, BlockType, ID_EMPTY, blocktype_from_id};
 use shared::items::{STARTING_PICKAXE_ID, get_item};
-use shared::{ITEMS, ItemId, RawGoal, RawLevel};
+use shared::{ITEMS, ItemId, RawGoal, RawLevel, STAR_CHESTS_PER_LEVEL};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
@@ -127,6 +127,23 @@ fn sync_gold_count(level: &mut RawLevel) {
     }
 }
 
+fn validation_errors(levels: &[RawLevel]) -> Vec<String> {
+    let expected = usize::from(STAR_CHESTS_PER_LEVEL);
+    levels
+        .iter()
+        .enumerate()
+        .filter_map(|(index, level)| {
+            let count = level.star_chest_count();
+            (count != expected).then(|| {
+                format!(
+                    "Level {}: expected {expected} StarChests, found {count}",
+                    index + 1
+                )
+            })
+        })
+        .collect()
+}
+
 fn normalize_goal_chest(level: &mut RawLevel) {
     let RawGoal::Collect { x, z } = level.goal else {
         clear_goal_chests(level);
@@ -199,6 +216,7 @@ pub struct LevelEditor {
 
     // Status / save / delete
     saved_at: Option<Instant>,
+    popup: Option<String>,
     pending_delete_at: Option<Instant>,
 
     history: History,
@@ -238,15 +256,36 @@ impl LevelEditor {
             pending_chest_kind: BlockType::ItemChest,
             pending_chest_item: STARTING_PICKAXE_ID,
             saved_at: None,
+            popup: None,
             pending_delete_at: None,
             history: History::new(),
         }
     }
 
-    fn save(&mut self) {
+    fn show_validation_popup(&mut self, action: &str) -> bool {
+        let errors = validation_errors(&self.levels);
+        if errors.is_empty() {
+            return false;
+        }
+        self.popup = Some(format!(
+            "Can't {action} while errors exist:\n{}",
+            errors.join("\n")
+        ));
+        true
+    }
+
+    fn save(&mut self, action: &str) -> bool {
         for level in &mut self.levels {
             sync_gold_count(level);
             normalize_goal_chest(level);
+        }
+
+        if self.show_validation_popup(action) {
+            self.saved_at = None;
+            return false;
+        }
+
+        for level in &mut self.levels {
             shift_coords(level, 1);
         }
         let config = ron::ser::PrettyConfig::new()
@@ -256,20 +295,25 @@ impl LevelEditor {
         for level in &mut self.levels {
             shift_coords(level, -1);
         }
-        match serialized {
-            Ok(s) => match std::fs::write(&self.levels_path, s) {
-                Ok(_) => {
-                    self.dirty = false;
-                    self.saved_at = Some(Instant::now());
-                }
-                Err(e) => {
-                    self.saved_at = None;
-                    eprintln!("save error: {e}");
-                }
-            },
-            Err(e) => {
+
+        let result = serialized
+            .map_err(|e| format!("serialize error: {e}"))
+            .and_then(|s| {
+                std::fs::write(&self.levels_path, s).map_err(|e| format!("save error: {e}"))
+            });
+
+        match result {
+            Ok(()) => {
+                self.dirty = false;
+                self.saved_at = Some(Instant::now());
+                self.popup = None;
+                true
+            }
+            Err(error) => {
                 self.saved_at = None;
-                eprintln!("serialize error: {e}");
+                eprintln!("{error}");
+                self.popup = Some(format!("Can't {action}: {error}"));
+                false
             }
         }
     }
@@ -279,6 +323,9 @@ impl LevelEditor {
         let (w, h) = (20u8, 15u8);
         let mut grid = vec![vec![ID_EMPTY; w as usize]; h as usize];
         grid[2][2] = BlockType::GoalChest.id();
+        for (x, z) in [(4u8, 2u8), (10, 7), (16, 12)] {
+            grid[z as usize][x as usize] = BlockType::StarChest.id();
+        }
         let level = RawLevel {
             spawn: (1, 1),
             width: w,
@@ -448,6 +495,16 @@ impl LevelEditor {
             return;
         }
 
+        if matches!(brush, Brush::Block(BlockType::StarChest)) {
+            if self.tool != Tool::Paint {
+                return;
+            }
+            let is_star = blocktype_from_id(level.grid[zi][xi]) == Some(BlockType::StarChest);
+            if !is_star && level.star_chest_count() >= usize::from(STAR_CHESTS_PER_LEVEL) {
+                return;
+            }
+        }
+
         if matches!(brush, Brush::Block(_)) && (x, z) == level.spawn {
             return;
         }
@@ -522,7 +579,7 @@ impl LevelEditor {
         }
         let new_id = match self.selected_brush {
             Brush::Spawn => return,
-            Brush::Block(kind) if kind.is_item_chest() => return,
+            Brush::Block(kind) if kind.is_item_chest() || kind == BlockType::StarChest => return,
             brush => brush.block_id().unwrap_or(ID_EMPTY),
         };
 
@@ -611,6 +668,22 @@ impl LevelEditor {
             (l.width, l.height, l.spawn)
         };
         ui.label(format!("Spawn: ({}, {})", spawn.0 + 1, spawn.1 + 1));
+        let (star_chests, expected_stars) = {
+            let level = &self.levels[self.current];
+            (
+                level.star_chest_count(),
+                usize::from(STAR_CHESTS_PER_LEVEL),
+            )
+        };
+        let star_colour = if star_chests == expected_stars {
+            egui::Color32::from_rgb(120, 200, 120)
+        } else {
+            egui::Color32::RED
+        };
+        ui.colored_label(
+            star_colour,
+            format!("StarChests: {star_chests}/{expected_stars}"),
+        );
 
         // Resizable size
         let mut new_w = w;
@@ -697,6 +770,17 @@ impl LevelEditor {
                         self.goal_pick_mode = true;
                     }
                 });
+            }
+        }
+
+        ui.separator();
+        ui.heading("Errors");
+        let errors = validation_errors(&self.levels);
+        if errors.is_empty() {
+            ui.colored_label(egui::Color32::from_rgb(120, 200, 120), "None");
+        } else {
+            for error in errors {
+                ui.colored_label(egui::Color32::RED, error);
             }
         }
     }
@@ -1058,6 +1142,21 @@ impl LevelEditor {
             self.pending_chest = None;
         }
     }
+
+    fn show_popup(&mut self, ctx: &egui::Context) {
+        let Some(message) = self.popup.clone() else {
+            return;
+        };
+        let response = egui::Modal::new(egui::Id::new("editor_error_popup")).show(ctx, |ui| {
+            ui.heading("Cannot save or close");
+            ui.label(message);
+            ui.add_space(8.0);
+            ui.button("OK").clicked()
+        });
+        if response.inner || response.should_close() {
+            self.popup = None;
+        }
+    }
 }
 
 impl eframe::App for LevelEditor {
@@ -1080,8 +1179,12 @@ impl eframe::App for LevelEditor {
             opt.feathering = false;
         });
 
-        if ctx.input(|i| i.viewport().close_requested()) && self.dirty {
-            self.save();
+        if ctx.input(|i| i.viewport().close_requested()) {
+            if self.show_validation_popup("close") {
+                ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+            } else if self.dirty && !self.save("close") {
+                ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+            }
         }
 
         if !ctx.egui_wants_keyboard_input() {
@@ -1103,7 +1206,7 @@ impl eframe::App for LevelEditor {
                 self.dirty = true;
             }
             if save {
-                self.save();
+                self.save("save");
             }
         }
 
@@ -1173,7 +1276,7 @@ impl eframe::App for LevelEditor {
                 ui.separator();
                 ui.add_space(6.0);
                 if ui.button("Save").clicked() {
-                    self.save();
+                    self.save("save");
                 }
 
                 ui.add_space(6.0);
@@ -1245,6 +1348,7 @@ impl eframe::App for LevelEditor {
         });
 
         self.show_chest_window(&ctx);
+        self.show_popup(&ctx);
 
         if self.pending_delete_at.is_some()
             && !delete_clicked

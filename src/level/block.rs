@@ -6,6 +6,8 @@ pub enum DropKind {
     Gold,
     Energy,
     Item,
+    Tech,
+    Star,
 }
 
 pub struct Drop {
@@ -122,7 +124,7 @@ static STARCHEST: BlockDef = BlockDef {
     category: BlockCategory::Chest,
     max_health: None,
     colour: Color::from_rgba(80, 150, 255, 255),
-    drops: &[],
+    drops: &[Drop::new(DropKind::Star, 1)],
 };
 
 static ITEMCHEST: BlockDef = BlockDef {
@@ -157,7 +159,7 @@ static TECHCRYSTAL1: BlockDef = BlockDef {
     category: BlockCategory::Crystal,
     max_health: None,
     colour: Color::from_rgba(60, 100, 220, 255),
-    drops: &[Drop::new(DropKind::Energy, 10)],
+    drops: &[Drop::new(DropKind::Tech, 10)],
 };
 
 static ROCK1: BlockDef = BlockDef {

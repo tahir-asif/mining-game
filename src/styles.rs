@@ -4,6 +4,7 @@ use egui::Color32;
 use egui_macroquad::egui::{
     self, FontData, FontDefinitions, FontFamily, FontId, RichText, TextStyle,
 };
+use shared::StarCount;
 
 #[rustfmt::skip]
 pub fn setup_global_style(ctx: &egui::Context) {
@@ -69,4 +70,13 @@ pub fn normal_text(t: impl Into<String>) -> RichText {
 
 pub fn small_text(t: impl Into<String>) -> RichText {
     RichText::new(t).text_style(TextStyle::Small)
+}
+
+pub fn star_text(stars: StarCount) -> &'static str {
+    match stars {
+        StarCount::Zero => "☆☆☆",
+        StarCount::One => "★☆☆",
+        StarCount::Two => "★★☆",
+        StarCount::Three => "★★★",
+    }
 }

@@ -7,4 +7,4 @@ pub use items::{
     ITEMS, ItemId, ItemKind, ItemRef, STARTING_BACKPACK, STARTING_HAT, STARTING_PICKAXE,
     STARTING_PICKAXE_ID,
 };
-pub use level::{BlockId, RawGoal, RawLevel};
+pub use level::{BlockId, RawGoal, RawLevel, STAR_CHESTS_PER_LEVEL, StarCount};
