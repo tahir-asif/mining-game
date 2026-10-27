@@ -28,14 +28,14 @@ impl Profile {
             name,
             save_slot,
             gold: 0,
-            items: vec![],
+            items: Vec::new(),
             equipped: Equipped {
                 pickaxe: &shared::STARTING_PICKAXE,
                 hat: &shared::STARTING_HAT,
                 backpack: &shared::STARTING_BACKPACK,
             },
             latest_completed_level: 0,
-            stars: vec![],
+            stars: Vec::new(),
         }
     }
 
@@ -99,7 +99,7 @@ impl Profile {
             .unwrap_or(StarCount::Zero)
     }
 
-    fn record_stars(&mut self, level: LevelId, stars: StarCount) {
+    fn collect_stars(&mut self, level: LevelId, stars: StarCount) {
         let Some(index) = level.checked_sub(1).map(usize::from) else {
             return;
         };
@@ -113,13 +113,13 @@ impl Profile {
         &self.stars
     }
 
-    pub(crate) fn restore_stars(&mut self, stars: Vec<StarCount>) {
+    pub fn set_stars(&mut self, stars: Vec<StarCount>) {
         self.stars = stars;
         self.stars.truncate(crate::level::levels::LEVELS.len());
     }
 
     pub fn collect_winnings(&mut self, winnings: Winnings) {
-        self.record_stars(winnings.latest_completed_level, winnings.stars);
+        self.collect_stars(winnings.latest_completed_level, winnings.stars);
 
         self.gold += winnings.gold;
         self.latest_completed_level =

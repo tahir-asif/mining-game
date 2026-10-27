@@ -1,85 +1,298 @@
+use crate::level::abilities::BOMB_COST;
 use crate::level::{levels::Goal, player::Player};
 use crate::styles::star_text;
 
-use egui_macroquad::egui::{self, Align2, Frame, Label, Ui};
+use egui_macroquad::egui::{
+    self, Align2, Color32, CornerRadius, CursorIcon, Response, Sense, Stroke, StrokeKind,
+    TextStyle, Ui, WidgetInfo, WidgetType,
+};
 
-pub fn draw_ui(player: &mut Player, goal: Goal, gold_mined: u16) {
+const HUD_MARGIN: f32 = 16.0;
+const HUD_HEIGHT: f32 = 56.0;
+const HUD_GAP: f32 = 8.0;
+const HUD_CORNER_RADIUS: u8 = 6;
+
+const PANEL_FILL: Color32 = Color32::from_rgb(30, 32, 42);
+const PANEL_BORDER: Color32 = Color32::from_rgb(72, 78, 100);
+const VALUE_TEXT: Color32 = Color32::from_rgb(240, 240, 245);
+const MUTED_TEXT: Color32 = Color32::from_rgb(150, 155, 175);
+
+const ENERGY_ACCENT: Color32 = Color32::from_rgb(235, 100, 100);
+const GOLD_ACCENT: Color32 = Color32::from_rgb(235, 190, 80);
+const GOAL_ACCENT: Color32 = Color32::from_rgb(140, 190, 255);
+const STAR_ACCENT: Color32 = Color32::from_rgb(245, 230, 140);
+const TECH_ACCENT: Color32 = Color32::from_rgb(100, 220, 210);
+
+const ABILITY_FILL: Color32 = Color32::from_rgb(36, 39, 50);
+const ABILITY_BORDER: Color32 = Color32::from_rgb(84, 90, 110);
+const ABILITY_HOVER_FILL: Color32 = Color32::from_rgb(52, 57, 74);
+const ABILITY_HOVER_BORDER: Color32 = Color32::from_rgb(200, 205, 220);
+const ABILITY_PRESSED_FILL: Color32 = Color32::from_rgb(74, 82, 104);
+const ABILITY_ACTIVE_FILL: Color32 = Color32::from_rgb(22, 92, 88);
+const ABILITY_ACTIVE_HOVER_FILL: Color32 = Color32::from_rgb(30, 116, 110);
+const ABILITY_ACTIVE_PRESSED_FILL: Color32 = Color32::from_rgb(18, 75, 72);
+const ABILITY_ACTIVE_BORDER: Color32 = Color32::from_rgb(110, 240, 220);
+const ABILITY_ACTIVE_COST: Color32 = Color32::from_rgb(190, 245, 235);
+const ABILITY_DISABLED_FILL: Color32 = Color32::from_rgb(28, 30, 37);
+const ABILITY_DISABLED_BORDER: Color32 = Color32::from_rgb(55, 58, 68);
+const ABILITY_DISABLED_TEXT: Color32 = Color32::from_rgb(100, 103, 115);
+
+const ENERGY_WIDTH: f32 = 104.0;
+const GOLD_WIDTH: f32 = 104.0;
+const GOAL_WIDTH: f32 = 210.0;
+const STARS_WIDTH: f32 = 104.0;
+const TECH_WIDTH: f32 = 88.0;
+const ABILITY_WIDTH: f32 = 112.0;
+
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
+pub enum SelectedAbility {
+    #[default]
+    None,
+    Bomb,
+}
+
+impl SelectedAbility {
+    pub const ABILITY_BUTTONS: &'static [Self] = &[Self::Bomb];
+
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::None => "",
+            Self::Bomb => "BOMB",
+        }
+    }
+
+    pub const fn cost(self) -> u16 {
+        match self {
+            Self::None => 0,
+            Self::Bomb => BOMB_COST,
+        }
+    }
+}
+
+pub enum HudAction {
+    None,
+    Toggle(SelectedAbility),
+    Deselect,
+}
+
+struct AbilityRow {
+    clicked: Option<SelectedAbility>,
+    consumed_click: bool,
+}
+
+pub fn draw_ui(player: &Player, goal: Goal, gold_mined: u16, active: SelectedAbility) -> HudAction {
+    let mut action = HudAction::None;
+
     egui_macroquad::ui(|ctx| {
         egui::Area::new("hud_top_left".into())
-            .anchor(Align2::LEFT_TOP, egui::vec2(10.0, 10.0))
+            .anchor(Align2::LEFT_TOP, egui::vec2(HUD_MARGIN, HUD_MARGIN))
             .show(ctx, |ui| {
                 hud_top_left(ui, player);
             });
+
         egui::Area::new("hud_top_right".into())
-            .anchor(Align2::RIGHT_TOP, egui::vec2(-10.0, 10.0))
+            .anchor(Align2::RIGHT_TOP, egui::vec2(-HUD_MARGIN, HUD_MARGIN))
             .show(ctx, |ui| {
                 hud_top_right(ui, player, goal, gold_mined);
             });
-        egui::Area::new("hud_bottom_right".into())
-            .anchor(Align2::RIGHT_BOTTOM, egui::vec2(-10.0, -10.0))
-            .show(ctx, |ui| {
-                hud_bottom_right(ui, player);
-            });
+
+        let ability_row = egui::Area::new("hud_bottom_right".into())
+            .anchor(Align2::RIGHT_BOTTOM, egui::vec2(-HUD_MARGIN, -HUD_MARGIN))
+            .show(ctx, |ui| hud_bottom_right(ui, player, active))
+            .inner;
+
+        action = if let Some(clicked) = ability_row.clicked {
+            HudAction::Toggle(clicked)
+        } else if !ability_row.consumed_click && ctx.input(|input| input.pointer.primary_clicked())
+        {
+            HudAction::Deselect
+        } else {
+            HudAction::None
+        };
+    });
+
+    action
+}
+
+fn hud_top_left(ui: &mut Ui, player: &Player) {
+    stat_card(
+        ui,
+        ENERGY_WIDTH,
+        "ENERGY",
+        &player.energy.to_string(),
+        ENERGY_ACCENT,
+    );
+}
+
+fn hud_top_right(ui: &mut Ui, player: &Player, goal: Goal, gold_mined: u16) {
+    ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = HUD_GAP;
+
+        stat_card(
+            ui,
+            GOLD_WIDTH,
+            "GOLD",
+            &player.collected_gold.to_string(),
+            GOLD_ACCENT,
+        );
+        stat_card(
+            ui,
+            GOAL_WIDTH,
+            "GOAL",
+            &goal.to_str(gold_mined),
+            GOAL_ACCENT,
+        );
+        stat_card(
+            ui,
+            STARS_WIDTH,
+            "STARS",
+            star_text(player.stars),
+            STAR_ACCENT,
+        );
     });
 }
 
-fn hud_frame() -> Frame {
-    egui::Frame::new()
-        .fill(egui::Color32::from_gray(70))
-        .inner_margin(8.0)
-        .corner_radius(4.0)
-}
-
-fn hud_bottom_right(ui: &mut Ui, player: &mut Player) {
-    let frame = hud_frame();
-
-    let block_size = egui::vec2(50.0, 50.0);
+fn hud_bottom_right(ui: &mut Ui, player: &Player, active: SelectedAbility) -> AbilityRow {
+    let mut clicked = None;
+    let mut consumed_click = false;
 
     ui.horizontal(|ui| {
-        frame.show(ui, |ui| {
-            ui.allocate_ui_with_layout(
-                block_size,
-                egui::Layout::top_down(egui::Align::Center),
-                |ui| {
-                    ui.label("TECH");
-                    ui.label(format!("{}", player.tech));
-                },
-            );
-        });
+        ui.spacing_mut().item_spacing.x = HUD_GAP;
 
-        frame.show(ui, |ui| {
-            ui.label("Bomb");
-            ui.label("10");
-        });
+        stat_card(
+            ui,
+            TECH_WIDTH,
+            "TECH",
+            &player.tech.to_string(),
+            TECH_ACCENT,
+        );
+
+        for &ability in SelectedAbility::ABILITY_BUTTONS {
+            let is_active = ability == active;
+            let enabled = is_active || player.tech >= ability.cost();
+            let response = ability_button(ui, ability, is_active, enabled);
+
+            if response.clicked() {
+                consumed_click = true;
+                if enabled {
+                    clicked = Some(ability);
+                }
+            }
+        }
     });
+
+    AbilityRow {
+        clicked,
+        consumed_click,
+    }
 }
 
-fn hud_top_right(ui: &mut Ui, player: &mut Player, goal: Goal, gold_mined: u16) {
-    let frame = hud_frame();
+fn paint_panel(ui: &Ui, rect: egui::Rect, fill: Color32, border: Color32, border_width: f32) {
+    let painter = ui.painter();
+    let corner_radius = CornerRadius::same(HUD_CORNER_RADIUS);
 
-    ui.horizontal_top(|ui| {
-        frame.show(ui, |ui| {
-            ui.label(star_text(player.stars));
-        });
-        frame.show(ui, |ui| {
-            ui.add(Label::new(goal.to_str(gold_mined)).wrap_mode(egui::TextWrapMode::Extend));
-        });
-        frame.show(ui, |ui| {
-            ui.vertical_centered(|ui| {
-                ui.label("GOLD");
-                ui.label(format!("{}", player.collected_gold));
-            });
-        });
-    });
+    painter.rect_filled(rect, corner_radius, fill);
+    painter.rect_stroke(
+        rect,
+        corner_radius,
+        Stroke::new(border_width, border),
+        StrokeKind::Inside,
+    );
 }
 
-fn hud_top_left(ui: &mut Ui, player: &mut Player) {
-    let frame = hud_frame();
+fn stat_card(ui: &mut Ui, width: f32, title: &str, value: &str, accent: Color32) -> Response {
+    let (rect, response) = ui.allocate_exact_size(egui::vec2(width, HUD_HEIGHT), Sense::hover());
+    paint_panel(ui, rect, PANEL_FILL, PANEL_BORDER, 1.0);
 
-    frame.show(ui, |ui| {
-        ui.vertical_centered(|ui| {
-            ui.label("ENERGY");
-            ui.label(format!("{}", player.energy));
-        });
-    });
+    let title_font = TextStyle::Small.resolve(ui.style());
+    let value_font = TextStyle::Body.resolve(ui.style());
+    let painter = ui.painter();
+
+    painter.text(
+        egui::pos2(rect.center().x, rect.top() + 15.0),
+        Align2::CENTER_CENTER,
+        title,
+        title_font,
+        accent,
+    );
+    painter.text(
+        egui::pos2(rect.center().x, rect.top() + 38.0),
+        Align2::CENTER_CENTER,
+        value,
+        value_font,
+        VALUE_TEXT,
+    );
+
+    response
+}
+
+fn ability_button(ui: &mut Ui, ability: SelectedAbility, active: bool, enabled: bool) -> Response {
+    let (rect, mut response) =
+        ui.allocate_exact_size(egui::vec2(ABILITY_WIDTH, HUD_HEIGHT), Sense::click());
+
+    if enabled {
+        response = response.on_hover_cursor(CursorIcon::PointingHand);
+    }
+
+    response.widget_info(|| WidgetInfo::labeled(WidgetType::Button, enabled, ability.name()));
+
+    let hovered = enabled && response.hovered();
+    let pressed = enabled && response.is_pointer_button_down_on();
+
+    let (fill, border, name_color, cost_color) = if !enabled {
+        (
+            ABILITY_DISABLED_FILL,
+            ABILITY_DISABLED_BORDER,
+            ABILITY_DISABLED_TEXT,
+            ABILITY_DISABLED_TEXT,
+        )
+    } else if active {
+        let fill = if pressed {
+            ABILITY_ACTIVE_PRESSED_FILL
+        } else if hovered {
+            ABILITY_ACTIVE_HOVER_FILL
+        } else {
+            ABILITY_ACTIVE_FILL
+        };
+        (fill, ABILITY_ACTIVE_BORDER, VALUE_TEXT, ABILITY_ACTIVE_COST)
+    } else if pressed {
+        (ABILITY_PRESSED_FILL, Color32::WHITE, VALUE_TEXT, MUTED_TEXT)
+    } else if hovered {
+        (
+            ABILITY_HOVER_FILL,
+            ABILITY_HOVER_BORDER,
+            VALUE_TEXT,
+            MUTED_TEXT,
+        )
+    } else {
+        (ABILITY_FILL, ABILITY_BORDER, VALUE_TEXT, MUTED_TEXT)
+    };
+
+    let border_width = if enabled && (active || hovered || pressed) {
+        2.0
+    } else {
+        1.0
+    };
+    paint_panel(ui, rect, fill, border, border_width);
+
+    let name_font = TextStyle::Body.resolve(ui.style());
+    let cost_font = TextStyle::Small.resolve(ui.style());
+    let painter = ui.painter();
+
+    painter.text(
+        egui::pos2(rect.center().x, rect.top() + 16.0),
+        Align2::CENTER_CENTER,
+        ability.name(),
+        name_font,
+        name_color,
+    );
+    painter.text(
+        egui::pos2(rect.center().x, rect.top() + 39.0),
+        Align2::CENTER_CENTER,
+        format!("{} TECH", ability.cost()),
+        cost_font,
+        cost_color,
+    );
+
+    response
 }

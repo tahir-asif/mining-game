@@ -10,6 +10,7 @@ pub enum Reveal {
     Player,
     Spawn,
     Torch,
+    Bomb,
 }
 
 pub struct GameMap {
@@ -83,6 +84,7 @@ impl GameMap {
             Reveal::Player => PLAYER_EXPLORE_RADIUS,
             Reveal::Torch => TORCH_EXPLORE_RADIUS,
             Reveal::Spawn => SPAWN_EXPLORE_RADIUS,
+            Reveal::Bomb => BOMB_EXPLORE_RADIUS,
         };
 
         let min_x = coords.x.saturating_sub(radius);

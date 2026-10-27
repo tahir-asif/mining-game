@@ -65,7 +65,7 @@ impl TryFrom<SavedProfile> for Profile {
         profile.gold = s.gold;
         profile.equipped = equipped;
         profile.latest_completed_level = s.latest_completed_level;
-        profile.restore_stars(s.stars);
+        profile.set_stars(s.stars);
         for id in s.items {
             if items::get_item(id).is_some() {
                 profile.add_item(id);

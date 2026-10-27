@@ -31,8 +31,8 @@ struct History {
 impl History {
     fn new() -> Self {
         Self {
-            undo: vec![],
-            redo: vec![],
+            undo: Vec::new(),
+            redo: Vec::new(),
         }
     }
 
@@ -974,7 +974,7 @@ impl LevelEditor {
                 let cells = if self.tool == Tool::Rect {
                     let (x0, x1) = if a.0 <= b.0 { (a.0, b.0) } else { (b.0, a.0) };
                     let (z0, z1) = if a.1 <= b.1 { (a.1, b.1) } else { (b.1, a.1) };
-                    let mut v = vec![];
+                    let mut v = Vec::new();
                     for z in z0..=z1 {
                         for x in x0..=x1 {
                             v.push((x, z));
@@ -989,7 +989,7 @@ impl LevelEditor {
                     let dz = -(z1 - z0).abs();
                     let sz = if z0 < z1 { 1 } else { -1 };
                     let mut err = dx + dz;
-                    let mut v = vec![];
+                    let mut v = Vec::new();
                     loop {
                         v.push((x0 as u8, z0 as u8));
                         if x0 == x1 && z0 == z1 {

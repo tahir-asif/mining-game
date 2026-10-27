@@ -23,7 +23,7 @@ impl Player {
             tech,
             mining_power,
             collected_gold: 0,
-            collected_items: vec![],
+            collected_items: Vec::new(),
             stars: StarCount::Zero,
         }
     }

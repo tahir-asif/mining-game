@@ -3,6 +3,7 @@ pub mod levels;
 pub mod outcome;
 pub mod winnings;
 
+mod abilities;
 mod block;
 mod camera;
 mod map;
@@ -12,6 +13,7 @@ mod ui;
 use crate::{
     game::TransitionState,
     level::{
+        abilities::{BOMB_COST, Bomb},
         block::{DropKind, MiningOutcome},
         camera::Camera,
         coordinate::MapCoords,
@@ -19,6 +21,7 @@ use crate::{
         map::GameMap,
         outcome::Outcome,
         player::Player,
+        ui::{HudAction, SelectedAbility},
         winnings::Winnings,
     },
 };
@@ -39,9 +42,10 @@ pub struct Level {
     camera: Camera,
     game_map: GameMap,
     meta_data: &'static LevelData,
-    // data that is set at initilization
     is_paused: bool,
     gold_blocks_mined: u16,
+    ability: SelectedAbility,
+    placed_bomb: Option<Bomb>,
 }
 
 impl Level {
@@ -63,9 +67,10 @@ impl Level {
             camera,
             game_map,
             meta_data,
-            // data that is set at initilization
             is_paused: false,
             gold_blocks_mined: 0,
+            ability: SelectedAbility::None,
+            placed_bomb: None,
         }
     }
 
@@ -75,6 +80,7 @@ impl Level {
         self.player.draw();
 
         if get_last_key_pressed() == Some(KeyCode::Escape) {
+            self.ability = SelectedAbility::None;
             self.is_paused = !self.is_paused;
         }
         if self.is_paused {
@@ -88,13 +94,164 @@ impl Level {
             return self.win_screen();
         }
 
+        self.draw_ui_and_get_input();
         self.handle_input();
-        ui::draw_ui(
-            &mut self.player,
+        self.tick_bombs();
+
+        TransitionState::None
+    }
+
+    fn draw_ui_and_get_input(&mut self) {
+        let action = ui::draw_ui(
+            &self.player,
             self.meta_data.goal,
             self.gold_blocks_mined,
+            self.ability,
         );
-        TransitionState::None
+
+        match action {
+            HudAction::None => {}
+            HudAction::Toggle(clicked) if self.ability == clicked => {
+                self.ability = SelectedAbility::None;
+            }
+            HudAction::Toggle(clicked) => self.ability = clicked,
+            HudAction::Deselect => self.ability = SelectedAbility::None,
+        }
+    }
+
+    fn is_goal_achieved(&self) -> bool {
+        // TODO: Change collect goal to detect mining GoalChest instead of moving to certain coords
+        match self.meta_data.goal {
+            Goal::Collect(coords) => self.player.get_coords() == coords,
+            Goal::MineAllGold(total) => self.gold_blocks_mined == total,
+        }
+    }
+
+    fn calc_winnings(&self) -> Winnings {
+        let items = self
+            .player
+            .collected_items
+            .iter()
+            .filter_map(|&id| get_item(id))
+            .collect();
+        Winnings {
+            gold: self.player.collected_gold,
+            items,
+            latest_completed_level: self.meta_data.id,
+            stars: self.player.stars,
+        }
+    }
+
+    fn tick_bombs(&mut self) {
+        let Some(bomb) = self.placed_bomb.as_mut() else {
+            return;
+        };
+        if let Some(blocks_to_mine) = bomb.bomb_update() {
+            for block in blocks_to_mine {
+                self.mine(block, u16::MAX, false);
+                self.game_map.reveal_map(block, map::Reveal::Bomb);
+            }
+            self.placed_bomb = None;
+        }
+    }
+
+    fn handle_input(&mut self) {
+        let is_shift_held: bool =
+            is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift);
+        match get_last_key_pressed() {
+            None => {}
+            Some(KeyCode::Up) | Some(KeyCode::W) => {
+                self.handle_input_direction(Direction::Up, is_shift_held);
+            }
+            Some(KeyCode::Down) | Some(KeyCode::S) => {
+                self.handle_input_direction(Direction::Down, is_shift_held)
+            }
+            Some(KeyCode::Right) | Some(KeyCode::D) => {
+                self.handle_input_direction(Direction::Right, is_shift_held)
+            }
+            Some(KeyCode::Left) | Some(KeyCode::A) => {
+                self.handle_input_direction(Direction::Left, is_shift_held)
+            }
+            Some(_) => self.ability = SelectedAbility::None,
+        }
+    }
+
+    fn handle_input_direction(&mut self, direction: Direction, is_shift_held: bool) {
+        let (dx, dz): (i8, i8) = match direction {
+            Direction::Left => (1, 0),
+            Direction::Right => (-1, 0),
+            Direction::Up => (0, 1),
+            Direction::Down => (0, -1),
+        };
+
+        let mut current = self.player.get_coords();
+        let new_coords: MapCoords = current.add((dx, dz));
+
+        // TODO: holding shift while placing makes bomb not appear, but still explodes
+        match self.ability {
+            SelectedAbility::None => self.move_player(new_coords, is_shift_held),
+            SelectedAbility::Bomb => self.place_bomb(new_coords),
+        }
+    }
+
+    fn place_bomb(&mut self, coords: MapCoords) {
+        // TODO: Possibly disable placing bomb on certain blocks
+        if self.placed_bomb.is_some() || self.player.tech < BOMB_COST {
+            self.ability = SelectedAbility::None;
+            return;
+        }
+        let bomb = Bomb::new(coords, self.game_map.is_block(coords));
+        self.placed_bomb = Some(bomb);
+        self.player.tech -= BOMB_COST;
+        self.ability = SelectedAbility::None;
+    }
+
+    fn move_player(&mut self, coords: MapCoords, do_mine: bool) {
+        if do_mine {
+            self.mine(coords, self.player.mining_power, true);
+        }
+        if self.game_map.is_block(coords) {
+            return;
+        }
+        self.player.move_to(coords);
+        self.game_map.reveal_map(coords, map::Reveal::Player);
+        self.camera.point(coords);
+    }
+
+    fn mine(&mut self, block: MapCoords, mining_power: u16, do_spend_energy: bool) {
+        let was_mine_successful = self.game_map.mine_block(block, mining_power);
+        match was_mine_successful {
+            None => {}
+            Some(MiningOutcome::Unbreakable) => {}
+            Some(MiningOutcome::Damaged) | Some(MiningOutcome::Destroyed) => {
+                if do_spend_energy {
+                    self.player.spend_energy();
+                }
+            }
+            Some(MiningOutcome::Gained(drops)) => {
+                if let Some(drop_kind) = self.player.collect_drops(drops) {
+                    match drop_kind {
+                        DropKind::Gold => {
+                            self.gold_blocks_mined += 1;
+                        }
+                        DropKind::Item => {
+                            let chest_loot = self
+                                .meta_data
+                                .chests
+                                .iter()
+                                .find(|(coord, _)| *coord == block)
+                                .map(|(_, id)| id);
+                            if let Some(loot) = chest_loot {
+                                self.player.collected_items.push(*loot);
+                            }
+                        }
+                        DropKind::Star => {}
+                        DropKind::Energy => {}
+                        DropKind::Tech => {}
+                    }
+                }
+            }
+        }
     }
 
     fn loss_screen(&mut self) -> TransitionState {

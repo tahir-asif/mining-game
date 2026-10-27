@@ -2,6 +2,7 @@ use shared::ItemId;
 
 use crate::level::MapCoords;
 
+// TODO: Set allowed abilites per level
 pub struct LevelData {
     pub id: LevelId,
     pub spawn: MapCoords,
@@ -26,8 +27,8 @@ pub enum Goal {
 impl Goal {
     pub fn to_str(self, gold_mined: u16) -> String {
         match self {
-            Goal::Collect(_) => format!("!  Find the exit chest"),
-            Goal::MineAllGold(total) => format!("!  Mine all gold {gold_mined}/{total}"),
+            Goal::Collect(_) => "Find the exit chest".to_owned(),
+            Goal::MineAllGold(total) => format!("Mine all gold {gold_mined}/{total}"),
         }
     }
 }

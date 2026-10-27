@@ -13,3 +13,4 @@ pub const SAVE_SLOT_COUNT: u8 = 3;
 pub const PLAYER_EXPLORE_RADIUS: u8 = 1;
 pub const SPAWN_EXPLORE_RADIUS: u8 = 2;
 pub const TORCH_EXPLORE_RADIUS: u8 = 2;
+pub const BOMB_EXPLORE_RADIUS: u8 = 1;

@@ -8,14 +8,17 @@
   are not interchangeable.
 - Repo folder is `rust_game` but the package/artifact is `mining_game`; web
   assets hardcode `mining_game.wasm`.
+- This is a 2d isometric grid based video game that is composed of multiple
+  hand-made levels. As a player completes levels, they gain resources which can
+  be spent at the hub area on upgrades.
 
 ## LLM Rules
 
 - Your role in this project is to help strategize the best way to implement
   given features, not to implement them yourself. This is a primarily human made
   project.
-- When you do produce code, give high level overviews of changes/additions that
-  explain what to do, not show every single line.
+- When you do produce code in plan mode, give high level overviews of
+  changes/additions that explain what to do, not show every single line.
 - Don't write comments in code.
 - Keep your responses shorter, focused on technical details and explain why you
   made choices that aren't obvious.
@@ -36,5 +39,3 @@
 - `index.html` loads raw wasm via `load("mining_game.wasm")` and needs manual
   `<script>` tags for `static/*.js`. CI copies all of `static/`, but adding a JS
   plugin still requires adding its tag to `index.html`.
-- `quad-storage.js` is required for web saves but is currently missing from
-  `index.html`; add it before the `load(...)` call when fixing web saves.
