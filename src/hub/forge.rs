@@ -2,6 +2,7 @@ use egui_macroquad::egui::{self, Ui};
 use shared::items::{ItemId, get_item};
 
 use crate::{
+    constants::ITEM_PRICE_TO_FORGE_COST_FACTOR,
     hub::{
         Filter, TOOLBAR_HEIGHT,
         inventory_ui::{draw_filter_bar, draw_inventory_grid, inventory_layout, item_labels},
@@ -65,19 +66,27 @@ impl Forge {
                     self.forge_crafting(ui, profile);
                     ui.add_space(20.0);
 
+                    let forge_cost = self
+                        .slot_1
+                        .and_then(get_item)
+                        .map_or(0, |item| ITEM_PRICE_TO_FORGE_COST_FACTOR * item.price());
+
                     self.forge_btn_unlocked = self.slot_1.is_some()
                         && self.slot_2.is_some()
-                        && self.result_slot.is_none();
+                        && self.result_slot.is_none()
+                        && profile.gold > forge_cost;
+
                     let btn = egui::Button::new("Forge!");
                     if ui.add_enabled(self.forge_btn_unlocked, btn).clicked() {
+                        profile.gold = profile.gold.saturating_sub(forge_cost);
                         self.forge_items();
                     }
-
                     ui.add_space(20.0);
                     if let Some(id) = self.slot_1 {
                         if let Some(item) = get_item(id) {
                             ui.label("In Crafting: ");
                             ui.add_space(10.0);
+                            ui.label(format!("Forge Cost: {}", forge_cost));
                             item_labels(ui, item);
                         }
                     } else if let Some(id) = self.result_slot {
@@ -146,7 +155,7 @@ impl Forge {
                     self.result_slot = None;
                 }
             } else {
-                inventory_slot(ui, 100.0, "result", HoverOnSlot::None);
+                inventory_slot(ui, 100.0, "Result", HoverOnSlot::None);
             }
             ui.end_row();
 
