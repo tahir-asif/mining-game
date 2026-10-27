@@ -43,6 +43,7 @@ const GOAL_WIDTH: f32 = 210.0;
 const STARS_WIDTH: f32 = 104.0;
 const TECH_WIDTH: f32 = 88.0;
 const ABILITY_WIDTH: f32 = 112.0;
+const AUTO_MINE_WIDTH: f32 = 190.0;
 
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub enum SelectedAbility {
@@ -71,7 +72,8 @@ impl SelectedAbility {
 
 pub enum HudAction {
     None,
-    Toggle(SelectedAbility),
+    ToggleAbility(SelectedAbility),
+    ToggleAutoMine,
     Deselect,
 }
 
@@ -80,7 +82,13 @@ struct AbilityRow {
     consumed_click: bool,
 }
 
-pub fn draw_ui(player: &Player, goal: Goal, gold_mined: u16, active: SelectedAbility) -> HudAction {
+pub fn draw_ui(
+    player: &Player,
+    goal: Goal,
+    gold_mined: u16,
+    active: SelectedAbility,
+    auto_mine: bool,
+) -> HudAction {
     let mut action = HudAction::None;
 
     egui_macroquad::ui(|ctx| {
@@ -96,13 +104,20 @@ pub fn draw_ui(player: &Player, goal: Goal, gold_mined: u16, active: SelectedAbi
                 hud_top_right(ui, player, goal, gold_mined);
             });
 
+        let auto_mine_clicked = egui::Area::new("hud_bottom_left".into())
+            .anchor(Align2::LEFT_BOTTOM, egui::vec2(HUD_MARGIN, -HUD_MARGIN))
+            .show(ctx, |ui| hud_bottom_left(ui, auto_mine))
+            .inner;
+
         let ability_row = egui::Area::new("hud_bottom_right".into())
             .anchor(Align2::RIGHT_BOTTOM, egui::vec2(-HUD_MARGIN, -HUD_MARGIN))
             .show(ctx, |ui| hud_bottom_right(ui, player, active))
             .inner;
 
         action = if let Some(clicked) = ability_row.clicked {
-            HudAction::Toggle(clicked)
+            HudAction::ToggleAbility(clicked)
+        } else if auto_mine_clicked {
+            HudAction::ToggleAutoMine
         } else if !ability_row.consumed_click && ctx.input(|input| input.pointer.primary_clicked())
         {
             HudAction::Deselect
@@ -112,6 +127,18 @@ pub fn draw_ui(player: &Player, goal: Goal, gold_mined: u16, active: SelectedAbi
     });
 
     action
+}
+
+fn hud_bottom_left(ui: &mut Ui, auto_mine: bool) -> bool {
+    toggle_button(
+        ui,
+        AUTO_MINE_WIDTH,
+        "TOGGLE MINING",
+        if auto_mine { "ON" } else { "OFF" },
+        auto_mine,
+        true,
+    )
+    .clicked()
 }
 
 fn hud_top_left(ui: &mut Ui, player: &Player) {
@@ -227,19 +254,37 @@ fn stat_card(ui: &mut Ui, width: f32, title: &str, value: &str, accent: Color32)
 }
 
 fn ability_button(ui: &mut Ui, ability: SelectedAbility, active: bool, enabled: bool) -> Response {
+    toggle_button(
+        ui,
+        ABILITY_WIDTH,
+        ability.name(),
+        &format!("{} TECH", ability.cost()),
+        active,
+        enabled,
+    )
+}
+
+fn toggle_button(
+    ui: &mut Ui,
+    width: f32,
+    label: &str,
+    subtitle: &str,
+    active: bool,
+    enabled: bool,
+) -> Response {
     let (rect, mut response) =
-        ui.allocate_exact_size(egui::vec2(ABILITY_WIDTH, HUD_HEIGHT), Sense::click());
+        ui.allocate_exact_size(egui::vec2(width, HUD_HEIGHT), Sense::click());
 
     if enabled {
         response = response.on_hover_cursor(CursorIcon::PointingHand);
     }
 
-    response.widget_info(|| WidgetInfo::labeled(WidgetType::Button, enabled, ability.name()));
+    response.widget_info(|| WidgetInfo::labeled(WidgetType::Button, enabled, label));
 
     let hovered = enabled && response.hovered();
     let pressed = enabled && response.is_pointer_button_down_on();
 
-    let (fill, border, name_color, cost_color) = if !enabled {
+    let (fill, border, label_color, subtitle_color) = if !enabled {
         (
             ABILITY_DISABLED_FILL,
             ABILITY_DISABLED_BORDER,
@@ -275,23 +320,23 @@ fn ability_button(ui: &mut Ui, ability: SelectedAbility, active: bool, enabled: 
     };
     paint_panel(ui, rect, fill, border, border_width);
 
-    let name_font = TextStyle::Body.resolve(ui.style());
-    let cost_font = TextStyle::Small.resolve(ui.style());
+    let label_font = TextStyle::Body.resolve(ui.style());
+    let subtitle_font = TextStyle::Small.resolve(ui.style());
     let painter = ui.painter();
 
     painter.text(
         egui::pos2(rect.center().x, rect.top() + 16.0),
         Align2::CENTER_CENTER,
-        ability.name(),
-        name_font,
-        name_color,
+        label,
+        label_font,
+        label_color,
     );
     painter.text(
         egui::pos2(rect.center().x, rect.top() + 39.0),
         Align2::CENTER_CENTER,
-        format!("{} TECH", ability.cost()),
-        cost_font,
-        cost_color,
+        subtitle,
+        subtitle_font,
+        subtitle_color,
     );
 
     response

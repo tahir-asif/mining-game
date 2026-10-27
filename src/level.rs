@@ -45,6 +45,7 @@ pub struct Level {
     is_paused: bool,
     gold_blocks_mined: u16,
     ability: SelectedAbility,
+    auto_mine: bool,
     placed_bomb: Option<Bomb>,
 }
 
@@ -70,6 +71,7 @@ impl Level {
             is_paused: false,
             gold_blocks_mined: 0,
             ability: SelectedAbility::None,
+            auto_mine: false,
             placed_bomb: None,
         }
     }
@@ -107,14 +109,16 @@ impl Level {
             self.meta_data.goal,
             self.gold_blocks_mined,
             self.ability,
+            self.auto_mine,
         );
 
         match action {
             HudAction::None => {}
-            HudAction::Toggle(clicked) if self.ability == clicked => {
+            HudAction::ToggleAbility(clicked) if self.ability == clicked => {
                 self.ability = SelectedAbility::None;
             }
-            HudAction::Toggle(clicked) => self.ability = clicked,
+            HudAction::ToggleAbility(clicked) => self.ability = clicked,
+            HudAction::ToggleAutoMine => self.auto_mine = !self.auto_mine,
             HudAction::Deselect => self.ability = SelectedAbility::None,
         }
     }
@@ -186,10 +190,11 @@ impl Level {
 
         let mut current = self.player.get_coords();
         let new_coords: MapCoords = current.add((dx, dz));
+        let do_mine = is_shift_held || self.auto_mine;
 
         // TODO: holding shift while placing makes bomb not appear, but still explodes
         match self.ability {
-            SelectedAbility::None => self.move_player(new_coords, is_shift_held),
+            SelectedAbility::None => self.move_player(new_coords, do_mine),
             SelectedAbility::Bomb => self.place_bomb(new_coords),
         }
     }
