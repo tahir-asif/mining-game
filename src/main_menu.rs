@@ -105,15 +105,13 @@ impl LoadSaveState {
 
 pub fn load_save_update(state: &mut LoadSaveState) -> TransitionState {
     let mut transition = TransitionState::None;
-    clear_background(BEIGE);
 
     egui_macroquad::ui(|ctx| {
-        let frame = egui::Frame::new()
-            .fill(egui::Color32::TRANSPARENT)
-            .inner_margin(10.0);
+        let fill_colour = egui::Color32::from_rgb(212, 177, 131);
+        let frame = egui::Frame::new().fill(fill_colour).inner_margin(10.0);
 
         egui::TopBottomPanel::top("top-bar")
-            .frame(frame)
+            .frame(frame.fill(fill_colour.gamma_multiply(0.8)))
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
                     let back_btn = ui.button("Back");
@@ -138,7 +136,7 @@ pub fn load_save_update(state: &mut LoadSaveState) -> TransitionState {
             });
 
         egui::CentralPanel::default().frame(frame).show(ctx, |ui| {
-            ui.add_space(20.0);
+            ui.add_space(40.0);
             ui.vertical_centered(|ui| {
                 save_slots(ui, &mut transition, state);
             });
@@ -264,6 +262,6 @@ pub fn save_slots(ui: &mut Ui, transition: &mut TransitionState, state: &mut Loa
         if deleted {
             *slot_opt = None;
         }
-        ui.add_space(20.0);
+        ui.add_space(40.0);
     }
 }

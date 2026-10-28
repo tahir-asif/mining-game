@@ -63,7 +63,7 @@ impl Hub {
         let mut transition = TransitionState::None;
 
         egui_macroquad::ui(|ctx| {
-            let fill_colour = Color32::from_gray(40);
+            let fill_colour = Color32::from_gray(80);
             let frame = egui::Frame::new().fill(fill_colour).inner_margin(15.0);
 
             let panel_width = 200.0;

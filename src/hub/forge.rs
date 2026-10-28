@@ -98,9 +98,8 @@ impl Forge {
 
                         let can_forge = self.can_forge();
 
-                        self.forge_btn_unlocked = can_forge
-                            && self.result_slot.is_none()
-                            && profile.gold > forge_cost;
+                        self.forge_btn_unlocked =
+                            can_forge && self.result_slot.is_none() && profile.gold > forge_cost;
 
                         let btn = egui::Button::new("Forge!")
                             .min_size(egui::vec2(ui.available_width(), CRAFTING_BUTTON_HEIGHT));
@@ -223,7 +222,7 @@ impl Forge {
                     self.result_slot = None;
                 }
             } else {
-                inventory_slot(ui, CRAFTING_SLOT_SIZE, "Result", HoverOnSlot::None);
+                inventory_slot(ui, CRAFTING_SLOT_SIZE, "", HoverOnSlot::None);
             }
         });
 
@@ -274,9 +273,8 @@ impl Forge {
             + 2.0 * ui.spacing().button_padding.y)
             .max(ui.spacing().interact_size.y)
             .max(CRAFTING_BUTTON_HEIGHT);
-        let crafting_area_height = 2.0 * CRAFTING_SLOT_SIZE
-            + 2.0 * CRAFTING_ARROW_GAP
-            + CRAFTING_ARROW_HEIGHT;
+        let crafting_area_height =
+            2.0 * CRAFTING_SLOT_SIZE + 2.0 * CRAFTING_ARROW_GAP + CRAFTING_ARROW_HEIGHT;
 
         let content_height = heading_height
             + CRAFTING_HEADING_GAP
@@ -294,8 +292,7 @@ impl Forge {
             return false;
         };
 
-        first == second
-            && get_item(first).is_some_and(|item| item.forges_into().is_some())
+        first == second && get_item(first).is_some_and(|item| item.forges_into().is_some())
     }
 
     fn forge_cost(&self) -> u16 {
