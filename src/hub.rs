@@ -61,14 +61,14 @@ impl Hub {
 
     pub fn hub_update(&mut self, profile: &mut Profile) -> TransitionState {
         let mut transition = TransitionState::None;
-        let fill_colour = Color32::from_rgb(95, 0, 223);
 
         egui_macroquad::ui(|ctx| {
+            let fill_colour = Color32::from_gray(40);
             let frame = egui::Frame::new().fill(fill_colour).inner_margin(15.0);
 
             let panel_width = 200.0;
             egui::SidePanel::left("SideBar")
-                .frame(frame.fill(fill_colour.linear_multiply(0.1)))
+                .frame(frame.fill(fill_colour.gamma_multiply(0.8)))
                 .exact_width(panel_width)
                 .resizable(false)
                 .show(ctx, |ui| {
@@ -77,7 +77,7 @@ impl Hub {
 
             let panel_width = 150.0;
             egui::SidePanel::right("Levels")
-                .frame(frame.fill(fill_colour.linear_multiply(0.1)))
+                .frame(frame.fill(fill_colour.gamma_multiply(0.8)))
                 .exact_width(panel_width)
                 .resizable(false)
                 .show(ctx, |ui| {
@@ -168,11 +168,7 @@ impl Hub {
             egui::ScrollArea::vertical().show(ui, |ui| {
                 let mut unlocked = true;
                 for level in LEVELS {
-                    let label = format!(
-                        "{} {}",
-                        level.id,
-                        star_text(profile.stars_for(level.id))
-                    );
+                    let label = format!("{} {}", level.id, star_text(profile.stars_for(level.id)));
                     let btn = egui::Button::new(&label);
 
                     if level.id > profile.latest_completed_level + 1 {
